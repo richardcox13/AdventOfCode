@@ -41,7 +41,7 @@ for r in 0..(setupStrs.Length-2) do
             stacks[col] <- Array.insertAt 0 c stacks[col]
 printfn "Starting stacks:"
 for s in 0..stackCount-1 do
-    printfn "  #%d: %s" s (String(stacks[s]))
+    printfn "  #%d: %s" (s+1) (String(stacks[s]))
 
 let movePattern = Regex("move (?<qty>\d+) from (?<src>\d+) to (?<dst>\d+)")
 
@@ -52,5 +52,23 @@ let moves = movesRawStr.Split("\r\n", StringSplitOptions.RemoveEmptyEntries)
                                         raise(Exception(sprintf "Failed to match line %d: %s" idx l))
                                      (int m.Groups["qty"].Value, int m.Groups["src"].Value, int m.Groups["dst"].Value)
                                     )
+
+let singleMove qty src dst =
+    // Input is one based, but array is zero based
+    let srcStack = stacks[src-1]
+    let newSourceLen = srcStack.Length - qty
+    stacks[src-1] <- srcStack |> Array.take newSourceLen
+    stacks[dst-1] <- Array.append (stacks[dst-1]) (srcStack |> Array.skip newSourceLen |> Array.rev)
+
+
 for (q, s, d) in moves do
     printfn "%d from %d to %d" q s d
+    singleMove q s d
+    printfn "  After move stacks:"
+    for s in 0..stackCount-1 do
+        printfn "    #%d: %s" (s+1) (String(stacks[s]))
+
+printfn "Final stacks:"
+for s in 0..stackCount-1 do
+    printfn "  #%d: %s" (s+1) (String(stacks[s]))
+
