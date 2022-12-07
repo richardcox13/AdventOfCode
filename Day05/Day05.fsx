@@ -5,6 +5,7 @@ open System.Diagnostics;
 open System.IO
 open System.Text.RegularExpressions
 
+(*
 let input = """    [D]    
 [N] [C]    
 [Z] [M] [P]
@@ -15,6 +16,9 @@ move 3 from 1 to 3
 move 2 from 2 to 1
 move 1 from 1 to 2  
 """
+*)
+
+let input = File.ReadAllText("./Day05.txt")
 
 // Break up input into initial stack setup, and moved
 let (setupRawStr, movesRawStr) = match input.Split("\r\n\r\n") with
@@ -62,13 +66,16 @@ let singleMove qty src dst =
 
 
 for (q, s, d) in moves do
-    printfn "%d from %d to %d" q s d
+    //printfn "%d from %d to %d" q s d
     singleMove q s d
-    printfn "  After move stacks:"
-    for s in 0..stackCount-1 do
-        printfn "    #%d: %s" (s+1) (String(stacks[s]))
+    // printfn "  After move stacks:"
+    // for s in 0..stackCount-1 do
+    //     printfn "    #%d: %s" (s+1) (String(stacks[s]))
 
 printfn "Final stacks:"
 for s in 0..stackCount-1 do
     printfn "  #%d: %s" (s+1) (String(stacks[s]))
 
+let res = stacks |> Seq.map (fun stk -> string (stk |> Array.last)) |> String.concat ""
+
+printfn "Result: %s" res
