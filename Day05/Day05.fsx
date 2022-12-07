@@ -42,3 +42,15 @@ for r in 0..(setupStrs.Length-2) do
 printfn "Starting stacks:"
 for s in 0..stackCount-1 do
     printfn "  #%d: %s" s (String(stacks[s]))
+
+let movePattern = Regex("move (?<qty>\d+) from (?<src>\d+) to (?<dst>\d+)")
+
+let moves = movesRawStr.Split("\r\n", StringSplitOptions.RemoveEmptyEntries)
+                        |> Seq.mapi (fun idx l ->
+                                     let m = movePattern.Match(l)
+                                     if not m.Success then
+                                        raise(Exception(sprintf "Failed to match line %d: %s" idx l))
+                                     (int m.Groups["qty"].Value, int m.Groups["src"].Value, int m.Groups["dst"].Value)
+                                    )
+for (q, s, d) in moves do
+    printfn "%d from %d to %d" q s d
