@@ -62,11 +62,17 @@ let buildTree (input: string seq) =
             | Match "dir (\w+)" m ->
                 assert (m.Length = 2)
                 printfn "Found folder %s" m[1]
+            | Match "(\d+) ([0-9.a-z]+)" m ->
+                assert (m.Length = 3)
+                printfn "Foound file \"%s\" length %d" m[2] (int m[1])
             | _ -> ()
         // Do not use else, want to fall through
         if not inFolderListing then
             match inp with
             | "$ cd .." -> printfn "Move up"
+            | Match "^\\$ cd ([0-9.a-z]+)" m ->
+                assert (m.Length = 2)
+                printfn "Move into folder \"%s\"" m[1]
             | "$ ls" -> 
                 printfn "List start"
                 inFolderListing <- true
