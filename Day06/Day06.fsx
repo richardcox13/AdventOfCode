@@ -12,19 +12,28 @@ let testInputs = [|
     "zcfzfwzzqfrljwzlrfnpqdbhtmscgvjw";
 |]
 
-let findStartBlock (input: string) =
-    input |> Seq.windowed 4
-          |> Seq.skipWhile (fun inp -> inp |> Array.distinct |> Array.length < 4)
+let findStartBlock (input: string)  seqLen=
+    input |> Seq.windowed seqLen
+          |> Seq.skipWhile (fun inp -> inp |> Array.distinct |> Array.length < seqLen)
           |> Seq.head
-          |> Seq.map (fun c -> string c)
+          |> Seq.map string
           |> String.concat ""
 
-for inp in testInputs do
-    let startSeq = findStartBlock inp
-    let offset = inp.IndexOf(startSeq)
-    printfn "Test %s -> %s offset = %d" inp startSeq (offset+4)
 
-let inp = File.ReadAllText("Day06.txt")
-let startSeq = findStartBlock inp
-let offset = inp.IndexOf(startSeq)
-printfn "Test %s -> %s offset = %d" inp startSeq (offset+4)
+let processInput seqLen =
+    // for inp in testInputs do
+    //     let startSeq = findStartBlock inp seqLen
+    //     let offset = inp.IndexOf(startSeq)
+    //     printfn "Test %s -> %s offset = %d" inp startSeq (offset+seqLen)
+
+    let inp = File.ReadAllText("Day06.txt")
+    let startSeq = findStartBlock inp seqLen
+    let offset = inp.IndexOf(startSeq) 
+    printfn "Test %s... -> %s offset = %d" (inp |> Seq.take 25 |> Seq.map string |> String.concat "") startSeq (offset+seqLen)
+
+
+printf "*** Part One ***"
+processInput 4
+
+printf "*** Part Two ***"
+processInput 14
