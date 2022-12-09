@@ -20,9 +20,11 @@ let res = File.ReadLines("./Day04.txt")
                                     let m = matcher.Match(inp)
                                     (int m.Groups["a"].Value, int m.Groups["b"].Value, int m.Groups["c"].Value, int m.Groups["d"].Value)
                                )
-                    |> Seq.filter (fun (a, b, c, d) ->
-                                        (a <= c && d <= b)
-                                        || (c <= a && b <= d)
+                    |> Seq.map (fun (a, b, c, d) ->
+                                        let isSubset = if (a <= c && d <= b) || (c <= a && b <= d) then 1 else 0
+                                        let isOveralp = if (a <= d && b >= c) then 1 else 0
+                                        (isSubset, isOveralp)
                                   )
-                    |> Seq.length
-printfn "Count = %A" res
+                    |> Seq.fold (fun (tSubset, tOverlap) (subset, overlap) -> (tSubset+subset, tOverlap+overlap)) (0, 0)
+let (subsets, overlaps) = res
+printfn "Subsets (part 1) = %d; Overlaps (part 2) = %d" subsets overlaps
