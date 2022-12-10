@@ -48,6 +48,15 @@ let (|Match|_|) pattern input =
 
 let root = {Name = "/"; Children = []}
 
+let rec getChildFolder (children: Node list) target =
+    match children with
+    | [] -> raise(InvalidDataException(sprintf "Failed to find child folder %s" target))
+    | top :: rest ->
+        match top with 
+        | Folder f when f.Name = target ->
+            f
+        | _ -> getChildFolder rest target
+
 let buildTree (input: string seq) =
     let mutable current = root
     let stack = Stack<FolderNode>()
@@ -76,10 +85,18 @@ let buildTree (input: string seq) =
         // Do not use else, want to fall through
         if not inFolderListing then
             match inp with
-            | "$ cd .." -> printfn "Move up"
+            | "$ cd .." ->
+                stack.Pop () |> ignore
+                current <- stack.Peek ()
+                printfn "Move up to folder %s" current.Name
+
             | Match "^\\$ cd ([0-9.a-z]+)" m ->
-                assert (m.Length = 2)
-                printfn "Move into folder \"%s\"" m[1]
+                let fn = m[1]
+                let f = getChildFolder current.Children fn
+                stack.Push f
+                current <- f
+                printfn "Move into folder \"%s\"" current.Name
+
             | "$ ls" -> 
                 printfn "List start"
                 inFolderListing <- true
@@ -94,7 +111,7 @@ let rec printFolder (prefix: string) (dir: FolderNode) =
         | Folder f ->
             printFolder (prefix + "  ") f
         | File (n,s) ->
-            printfn "%s%s %d" prefix n s
+            printfn "%s  %s %d" prefix n s
 
 printfn "After parse:"
 printFolder "  " root
