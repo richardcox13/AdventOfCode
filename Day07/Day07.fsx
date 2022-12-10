@@ -119,3 +119,18 @@ let rec printFolder (prefix: string) (dir: FolderNode) =
 
 printfn "After parse:"
 printFolder "  " root
+
+let rec folderSizes (dir: FolderNode) =
+    let size = dir.Children
+            |> Seq.map (fun c ->
+                            match c with
+                            | File (n, s) -> s
+                            | Folder f ->
+                                folderSizes f
+                       )
+            |> Seq.sum
+    printfn "Folder \"%s\" recursive size %d" dir.Name size
+    size
+
+printfn "Finding recursive folder sizes:"
+folderSizes root
