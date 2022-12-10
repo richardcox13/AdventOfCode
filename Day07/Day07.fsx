@@ -120,17 +120,31 @@ let rec printFolder (prefix: string) (dir: FolderNode) =
 printfn "After parse:"
 printFolder "  " root
 
+let empty = seq<string*int> Seq.empty
+
 let rec folderSizes (dir: FolderNode) =
-    let size = dir.Children
-            |> Seq.map (fun c ->
-                            match c with
-                            | File (n, s) -> s
-                            | Folder f ->
-                                folderSizes f
-                       )
-            |> Seq.sum
+    let (size, smallFolders) = dir.Children
+                            |> Seq.map (fun c ->
+                                            match c with
+                                            | File (n, s) -> (s, empty)
+                                            | Folder f ->
+                                                let (fs, ffs) = folderSizes f
+                                                if fs <= 100_000 then
+                                                    (fs, Seq.append ffs [| (f.Name, fs) |])
+                                                else
+                                                    (fs, ffs)
+                                       )
+                            |> Seq.fold (fun (accS, accFs) (s, fs)
+                                            -> (accS+s, Seq.append accFs fs)) (0, empty)
     printfn "Folder \"%s\" recursive size %d" dir.Name size
-    size
+    (size, smallFolders)
 
 printfn "Finding recursive folder sizes:"
-folderSizes root
+let (totalSize, smallFolders) = folderSizes root
+
+
+printfn "Total size: %d" totalSize
+printfn "Small Folders:"
+for (n, s) in smallFolders do
+    printfn "  %s: %d" n s
+printfn "Total size of small folders = %d" (smallFolders |> Seq.map snd |> Seq.sum)
