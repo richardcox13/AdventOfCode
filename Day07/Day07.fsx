@@ -68,11 +68,11 @@ let buildTree (input: string seq) =
             match inp with
             | Match "^\$" _ ->
                 inFolderListing <- false
-                printfn "Listing end"
+                //printfn "Listing end"
 
             | Match "dir (\w+)" m ->
                 assert (m.Length = 2)
-                printfn "Found folder %s" m[1]
+                //printfn "Found folder %s" m[1]
                 let folder = Folder({Name = m[1]; Children = []})
                 // Append isn't optimal, but more useful to preserve order
                 current.Children <- current.Children @ [folder]
@@ -81,7 +81,7 @@ let buildTree (input: string seq) =
                 assert (m.Length = 3)
                 let t = (m[2], int m[1])
                 let f = File(t)
-                printfn "Foound file \"%s\" length %d" (fst t) (snd t)
+                //printfn "Foound file \"%s\" length %d" (fst t) (snd t)
                 // Append isn't optimal, but more useful to preserve order
                 current.Children <- current.Children @ [f]
 
@@ -92,21 +92,22 @@ let buildTree (input: string seq) =
             | "$ cd .." ->
                 stack.Pop () |> ignore
                 current <- stack.Peek ()
-                printfn "Move up to folder %s" current.Name
+                //printfn "Move up to folder %s" current.Name
 
             | Match "^\\$ cd ([0-9.a-z]+)" m ->
                 let fn = m[1]
                 let f = getChildFolder current.Children fn
                 stack.Push f
                 current <- f
-                printfn "Move into folder \"%s\"" current.Name
+                //printfn "Move into folder \"%s\"" current.Name
 
             | "$ ls" -> 
-                printfn "List start"
+                //printfn "List start"
                 inFolderListing <- true
             | _ -> ()
 
-buildTree testInputs
+//buildTree testInputs
+buildTree (File.ReadAllLines("./Day07.txt"))
 
 let rec printFolder (prefix: string) (dir: FolderNode) =
     printfn "%s%s (dir)" prefix dir.Name
@@ -136,7 +137,7 @@ let rec folderSizes (dir: FolderNode) =
                                        )
                             |> Seq.fold (fun (accS, accFs) (s, fs)
                                             -> (accS+s, Seq.append accFs fs)) (0, empty)
-    printfn "Folder \"%s\" recursive size %d" dir.Name size
+    //printfn "Folder \"%s\" recursive size %d" dir.Name size
     (size, smallFolders)
 
 printfn "Finding recursive folder sizes:"
