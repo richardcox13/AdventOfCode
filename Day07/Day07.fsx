@@ -33,23 +33,24 @@ let testInputs = [|
     "7214296 k";
 |]
 
-type Node = {
+type FolderNode = {
     Name: string;
-    mutable Info: NodeInfo list
+    mutable Children: Node list
 }
-and NodeInfo = 
-    | File of int
-    | Folder of Node list
+and Node =
+    | File of string * int
+    | Folder of FolderNode
+
 
 let (|Match|_|) pattern input =
     let m = Regex.Match(input, pattern) in
     if m.Success then Some ([| for g in m.Groups -> g.Value |]) else None
 
-let root = { Name = "/" ; Info = [] }
+let root = {Name = "/"; Children = []}
 
 let buildTree (input: string seq) =
     let mutable current = root
-    let stack = Stack<Node>()
+    let stack = Stack<FolderNode>()
     stack.Push(current)
     let mutable inFolderListing = false
 
@@ -59,12 +60,18 @@ let buildTree (input: string seq) =
             | Match "^\$" _ ->
                 inFolderListing <- false
                 printfn "Listing end"
+
             | Match "dir (\w+)" m ->
                 assert (m.Length = 2)
                 printfn "Found folder %s" m[1]
+                let folder = Folder({Name = m[1]; Children = []})
+                // Append isn't optimal, but more useful to preserve order
+                current.Children <- current.Children @ [folder]
+
             | Match "(\d+) ([0-9.a-z]+)" m ->
                 assert (m.Length = 3)
                 printfn "Foound file \"%s\" length %d" m[2] (int m[1])
+
             | _ -> ()
         // Do not use else, want to fall through
         if not inFolderListing then
@@ -79,3 +86,15 @@ let buildTree (input: string seq) =
             | _ -> ()
 
 buildTree testInputs
+
+let rec printFolder (prefix: string) (dir: FolderNode) =
+    printfn "%s%s (dir)" prefix dir.Name
+    for n in dir.Children do
+        match n with
+        | Folder f ->
+            printFolder (prefix + "  ") f
+        | File (n,s) ->
+            printfn "%s%s %d" prefix n s
+
+printfn "After parse:"
+printFolder "  " root
