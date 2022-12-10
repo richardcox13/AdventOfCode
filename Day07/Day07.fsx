@@ -79,7 +79,11 @@ let buildTree (input: string seq) =
 
             | Match "(\d+) ([0-9.a-z]+)" m ->
                 assert (m.Length = 3)
-                printfn "Foound file \"%s\" length %d" m[2] (int m[1])
+                let t = (m[2], int m[1])
+                let f = File(t)
+                printfn "Foound file \"%s\" length %d" (fst t) (snd t)
+                // Append isn't optimal, but more useful to preserve order
+                current.Children <- current.Children @ [f]
 
             | _ -> ()
         // Do not use else, want to fall through
@@ -111,7 +115,7 @@ let rec printFolder (prefix: string) (dir: FolderNode) =
         | Folder f ->
             printFolder (prefix + "  ") f
         | File (n,s) ->
-            printfn "%s  %s %d" prefix n s
+            printfn "%s  %s (file) %d" prefix n s
 
 printfn "After parse:"
 printFolder "  " root
