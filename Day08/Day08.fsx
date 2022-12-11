@@ -14,7 +14,7 @@ let testInput = [|
 |]
 
 
-let input = testInput // Or read from Day08.txt
+let input = File.ReadAllLines("./Day08.txt") // Or read testInput
 
 let maxEast = input[0].Length-1
 let maxSouth = input.Length-1
