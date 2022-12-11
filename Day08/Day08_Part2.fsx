@@ -55,9 +55,9 @@ let scenicScore startPos =
     * scenicScoreInOneDirection startPos (-1, 0)
     * scenicScoreInOneDirection startPos (+1, 0)
 
-printfn "Scenic score for (2, 1): %d" (scenicScore (2, 1))
-printfn "Scenic score for (2, 3): %d" (scenicScore (2, 3))
-printfn "Scenic score for (0, 4): %d" (scenicScore (0, 4))
+// printfn "Scenic score for (2, 1): %d" (scenicScore (2, 1))
+// printfn "Scenic score for (2, 3): %d" (scenicScore (2, 3))
+// printfn "Scenic score for (0, 4): %d" (scenicScore (0, 4))
 
 
 let total = seq { 0..maxSouth }
