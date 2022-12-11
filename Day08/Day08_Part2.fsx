@@ -14,7 +14,7 @@ let testInput = [|
 |]
 
 
-let input = testInput // File.ReadAllLines("./Day08.txt") // Or read testInput
+let input = File.ReadAllLines("./Day08.txt") // Or read testInput
 
 let maxEast = input[0].Length-1
 let maxSouth = input.Length-1
@@ -60,13 +60,12 @@ printfn "Scenic score for (2, 3): %d" (scenicScore (2, 3))
 printfn "Scenic score for (0, 4): %d" (scenicScore (0, 4))
 
 
-// let total = seq { 0..maxSouth }
-//             |> Seq.collect (fun y -> seq {0..maxEast} |> Seq.map (fun x -> (x, y)))
-//             |> Seq.map (fun pos ->
-//                             let v =  treeIsVisible pos
-//                             //printfn "Pos %A: %b" pos v
-//                             v
-//                        )
-//             |> Seq.map (function | true -> 1 | false -> 0)
-//             |> Seq.sum
-// printfn "%d trees are visible" total
+let total = seq { 0..maxSouth }
+            |> Seq.collect (fun y -> seq {0..maxEast} |> Seq.map (fun x -> (x, y)))
+            |> Seq.map (fun pos ->
+                            let v =  scenicScore pos
+                            //printfn "Pos %A: %b" pos v
+                            v
+                       )
+            |> Seq.max
+printfn "Maximum scenic score: %d" total
