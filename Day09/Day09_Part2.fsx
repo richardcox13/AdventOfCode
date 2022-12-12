@@ -100,19 +100,19 @@ let updateKnotForPreviousKnotPosition prevKnot thisKnot =
 
 let tailPositions = HashSet<int*int>()
 
-let updatePositionWithInput oldState movement =
+let updatePositionsWithInput oldState movement =
     let (moves, direction) = movement
     //printfn "Move %d times offset (%d, %d)" moves (fst direction) (snd direction)
 
-    let rec updatePos oldHead oldTail count = 
+    let rec updatePos firstKnot secondKot count = 
         if count = 0 then
-            (oldHead, oldTail)
+            (firstKnot, secondKot)
         else
-            let newHead = (fst oldHead + fst direction, snd oldHead + snd direction)
+            let newFirstKnow = (fst firstKnot + fst direction, snd firstKnot + snd direction)
             //printfn "  Moved to head (%d, %d)" (fst newHead) (snd newHead)
-            let newTail = updateKnotForPreviousKnotPosition newHead oldTail
-            tailPositions.Add newTail |> ignore
-            updatePos newHead newTail (count-1)
+            let newSecondKnot = updateKnotForPreviousKnotPosition newFirstKnow secondKot
+            tailPositions.Add newSecondKnot |> ignore
+            updatePos newFirstKnow newSecondKnot (count-1)
 
     updatePos (fst oldState) (snd oldState) moves
 
@@ -122,7 +122,7 @@ let initialState = ((0, 0), (0, 0))
 
 let finalState = input
                     |> Seq.map parseOneMovement
-                    |> Seq.fold updatePositionWithInput initialState
+                    |> Seq.fold updatePositionsWithInput initialState
 
 let ((hX, hY), (tX, tY)) = finalState
 
