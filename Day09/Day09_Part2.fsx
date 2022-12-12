@@ -29,7 +29,9 @@ let testInput2 = [|
     "U 20";
 |]
 
-let input = (* File.ReadAllLines("./Day09.txt") // *) testInput
+let input = (* File.ReadAllLines("./Day09.txt") // *) testInput2
+
+let knotCount = 10
 
 let matchInput = Regex("([UDLR]) (\d+)")
 
@@ -49,6 +51,11 @@ let parseOneMovement inp =
     let count = int (m.Groups[2].Value)
     (count, offset)
 
+let printKnots prefix knots =
+    let ss = knots |> Array.map (fun k -> sprintf "(%d,%d)" (fst k) (snd k))
+                              |> String.concat "-> "
+    printfn "%s%s" prefix ss
+
 let updateKnotForPreviousKnotPosition prevKnot thisKnot =
     let sign x =
         if x > 0 then
@@ -60,6 +67,7 @@ let updateKnotForPreviousKnotPosition prevKnot thisKnot =
 
     let (pX, pY) = prevKnot
     let (tX, tY) = thisKnot
+    //printfn "    updateKnotForPreviousKnotPosition (%d, %d) (%d, %d)" pX pY tX tY
     let offsetX = pX - tX
     let offsetY = pY - tY
     let absX = abs offsetX
@@ -67,64 +75,73 @@ let updateKnotForPreviousKnotPosition prevKnot thisKnot =
 
     if absX <= 1 && absY <= 1 then
         // Overlapping, or next to each other: don't mopve
-        //printfn "    Tail does not move, stays at (%d, %d)" (fst tail) (snd tail)
+        //printfn "      Tail does not move, stays at (%d, %d)" (fst thisKnot) (snd thisKnot)
         thisKnot
     else if offsetX = 0 then
         // Is a gap but aliigned up/down
         assert (absY = 2)
         let newY = tY + (sign offsetY)
         let p = (tX, newY)
-        //printfn "    Y straight move tail to (%d, %d)" (fst p) (snd p)
+        //printfn "      Y straight move tail to (%d, %d)" (fst p) (snd p)
         p
     else if offsetY = 0 then
         // Is a gap but aliignedleft/right
         assert (absX = 2)
         let newX = tX + (sign offsetX)
         let p = (newX, tY)
-        //printfn "    X straight move tail to (%d, %d)" (fst p) (snd p)
+        //printfn "      X straight move tail to (%d, %d)" (fst p) (snd p)
         p
     else if absX = 1 && absY = 2 then
         // Need a diagonal move (first set of cases)
         let p = (tX + offsetX, tY + offsetY/2)
-        //printfn "    Move tail to (%d, %d)" (fst p) (snd p)
+        //printfn "      Move tail (opt12) to (%d, %d)" (fst p) (snd p)
         p
     else if absX = 2 && absY = 1 then
         // Need a diagonal move (second set of cases)
         let p = (tX + offsetX/2, tY + offsetY)
-        //printfn "    Move tail to (%d, %d)" (fst p) (snd p)
+        //printfn "      Move tail (opt21) to (%d, %d)" (fst p) (snd p)
+        p
+    else if absX = 2 && absY = 2 then
+        let p = (tX + offsetX/2, tY + offsetY/2)
+        //printfn "      Move tail (opt22) to (%d, %d)" (fst p) (snd p)
         p
     else
-        let msg = sprintf "Unexpected relative head and tail: head (%d, %d), tail (%d, %d) offset (%d, %d)"
+        let msg = sprintf "Unexpected relative prev and this knot: prev: (%d, %d), this: (%d, %d), & offset: (%d, %d)"
                             pX pY tX tY offsetX offsetY
         raise(UnreachableException(msg))
 
 let tailPositions = HashSet<int*int>()
 
-let updatePositionsWithInput oldState movement =
+let updatePositionsWithInput knots movement =
     let (moves, direction) = movement
     //printfn "Move %d times offset (%d, %d)" moves (fst direction) (snd direction)
 
-    let rec updatePos firstKnot secondKot count = 
+    let rec moveString knots count =
         if count = 0 then
-            (firstKnot, secondKot)
+            knots
         else
-            let newFirstKnow = (fst firstKnot + fst direction, snd firstKnot + snd direction)
-            //printfn "  Moved to head (%d, %d)" (fst newHead) (snd newHead)
-            let newSecondKnot = updateKnotForPreviousKnotPosition newFirstKnow secondKot
-            tailPositions.Add newSecondKnot |> ignore
-            updatePos newFirstKnow newSecondKnot (count-1)
+            let oldHead = knots |> Array.head
+            let newHead = (fst oldHead + fst direction, snd oldHead + snd direction)
+            let newString = knots
+                            |> Seq.skip 1
+                            |> Seq.scan updateKnotForPreviousKnotPosition newHead
+                            |> Seq.toArray
+            //printKnots "  " newString
+            tailPositions.Add(newString |> Array.last) |> ignore
+            moveString newString (count-1)
 
-    updatePos (fst oldState) (snd oldState) moves
+    moveString knots moves
 
 
 // (headPos, teailPos) each (x, y)
-let initialState = ((0, 0), (0, 0))
+let initialState = Array.create knotCount (0, 0)
 
 let finalState = input
                     |> Seq.map parseOneMovement
                     |> Seq.fold updatePositionsWithInput initialState
 
-let ((hX, hY), (tX, tY)) = finalState
+let (hX, hY) = finalState |> Array.head
+let (tX, tY) = finalState |> Array.last
 
 printfn "Final positions: head (%d, %d), tail (%d, %d)" hX, hY, tX, tY
 
