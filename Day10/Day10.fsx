@@ -155,7 +155,7 @@ let testInput = [|
     "noop";
 |]
 
-let input = testInput
+let input = File.ReadAllLines("./Day10.txt") //  testInput
 let checkCycleCounts = [| 20; 60; 100; 140; 180; 220 |]
 
 type MocpInstruction =
