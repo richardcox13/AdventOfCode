@@ -29,7 +29,7 @@ let testInput2 = [|
     "U 20";
 |]
 
-let input = (* File.ReadAllLines("./Day09.txt") // *) testInput2
+let input = File.ReadAllLines("./Day09.txt") // testInput2
 
 let knotCount = 10
 
