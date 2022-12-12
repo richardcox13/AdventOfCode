@@ -16,7 +16,7 @@ let testInput = [|
     "R 2";
 |]
 
-let input = testInput // Or read the file
+let input = File.ReadAllLines("./Day09.txt") // testInput
 
 let matchInput = Regex("([UDLR]) (\d+)")
 
@@ -56,31 +56,31 @@ let updateTailForNewHeadPosition head tail =
 
     if absX <= 1 && absY <= 1 then
         // Overlapping, or next to each other: don't mopve
-        printfn "    Tail does not move, stays at (%d, %d)" (fst tail) (snd tail)
+        //printfn "    Tail does not move, stays at (%d, %d)" (fst tail) (snd tail)
         tail
     else if offsetX = 0 then
         // Is a gap but aliigned up/down
         assert (absY = 2)
         let newY = tY + (sign offsetY)
         let p = (tX, newY)
-        printfn "    Y straight move tail to (%d, %d)" (fst p) (snd p)
+        //printfn "    Y straight move tail to (%d, %d)" (fst p) (snd p)
         p
     else if offsetY = 0 then
         // Is a gap but aliignedleft/right
         assert (absX = 2)
         let newX = tX + (sign offsetX)
         let p = (newX, tY)
-        printfn "    X straight move tail to (%d, %d)" (fst p) (snd p)
+        //printfn "    X straight move tail to (%d, %d)" (fst p) (snd p)
         p
     else if absX = 1 && absY = 2 then
         // Need a diagonal move (first set of cases)
         let p = (tX + offsetX, tY + offsetY/2)
-        printfn "    Move tail to (%d, %d)" (fst p) (snd p)
+        //printfn "    Move tail to (%d, %d)" (fst p) (snd p)
         p
     else if absX = 2 && absY = 1 then
         // Need a diagonal move (second set of cases)
         let p = (tX + offsetX/2, tY + offsetY)
-        printfn "    Move tail to (%d, %d)" (fst p) (snd p)
+        //printfn "    Move tail to (%d, %d)" (fst p) (snd p)
         p
     else
         let msg = sprintf "Unexpected relative head and tail: head (%d, %d), tail (%d, %d) offset (%d, %d)"
@@ -91,14 +91,14 @@ let tailPositions = HashSet<int*int>()
 
 let updatePositionWithInput oldState movement =
     let (moves, direction) = movement
-    printfn "Move %d times offset (%d, %d)" moves (fst direction) (snd direction)
+    //printfn "Move %d times offset (%d, %d)" moves (fst direction) (snd direction)
 
     let rec updatePos oldHead oldTail count = 
         if count = 0 then
             (oldHead, oldTail)
         else
             let newHead = (fst oldHead + fst direction, snd oldHead + snd direction)
-            printfn "  Moved to head (%d, %d)" (fst newHead) (snd newHead)
+            //printfn "  Moved to head (%d, %d)" (fst newHead) (snd newHead)
             let newTail = updateTailForNewHeadPosition newHead oldTail
             tailPositions.Add newTail |> ignore
             updatePos newHead newTail (count-1)
