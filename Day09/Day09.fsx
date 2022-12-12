@@ -39,37 +39,66 @@ let parseOneMovement inp =
 
 
 let updateTailForNewHeadPosition head tail =
+    let sign x =
+        if x > 0 then
+            +1
+        else if x < 0 then
+            -1
+        else
+            0
+
     let (hX, hY) = head
     let (tX, tY) = tail
     let offsetX = hX - tX
     let offsetY = hY - tY
-    if abs offsetX <= 1 && abs offsetY <= 1 then
+    let absX = abs offsetX
+    let absY = abs offsetY
+
+    if absX <= 1 && absY <= 1 then
         // Overlapping, or next to each other: don't mopve
+        printfn "    Tail does not move, stays at (%d, %d)" (fst tail) (snd tail)
         tail
     else if offsetX = 0 then
         // Is a gap but aliigned up/down
-        assert (abs offsetY = 2)
-        let newY = tY + (if offsetY > 0 then -1 else +1)
-        (tX, newY)
+        assert (absY = 2)
+        let newY = tY + (sign offsetY)
+        let p = (tX, newY)
+        printfn "    Y straight move tail to (%d, %d)" (fst p) (snd p)
+        p
     else if offsetY = 0 then
         // Is a gap but aliignedleft/right
-        assert (abs offsetX = 2)
-        let newX = tX + (if offsetX > 0 then -1 else +1)
-        (newX, tY)
+        assert (absX = 2)
+        let newX = tX + (sign offsetX)
+        let p = (newX, tY)
+        printfn "    X straight move tail to (%d, %d)" (fst p) (snd p)
+        p
+    else if absX = 1 && absY = 2 then
+        // Need a diagonal move (first set of cases)
+        let p = (tX + offsetX, tY + offsetY/2)
+        printfn "    Move tail to (%d, %d)" (fst p) (snd p)
+        p
+    else if absX = 2 && absY = 1 then
+        // Need a diagonal move (second set of cases)
+        let p = (tX + offsetX/2, tY + offsetY)
+        printfn "    Move tail to (%d, %d)" (fst p) (snd p)
+        p
     else
-        raise(UnreachableException())
+        let msg = sprintf "Unexpected relative head and tail: head (%d, %d), tail (%d, %d) offset (%d, %d)"
+                            hX hY tX tY offsetX offsetY
+        raise(UnreachableException(msg))
 
 let tailPositions = HashSet<int*int>()
 
-
 let updatePositionWithInput oldState movement =
     let (moves, direction) = movement
+    printfn "Move %d times offset (%d, %d)" moves (fst direction) (snd direction)
 
     let rec updatePos oldHead oldTail count = 
         if count = 0 then
             (oldHead, oldTail)
         else
             let newHead = (fst oldHead + fst direction, snd oldHead + snd direction)
+            printfn "  Moved to head (%d, %d)" (fst newHead) (snd newHead)
             let newTail = updateTailForNewHeadPosition newHead oldTail
             tailPositions.Add newTail |> ignore
             updatePos newHead newTail (count-1)
@@ -83,3 +112,9 @@ let initialState = ((0, 0), (0, 0))
 let finalState = input
                     |> Seq.map parseOneMovement
                     |> Seq.fold updatePositionWithInput initialState
+
+let ((hX, hY), (tX, tY)) = finalState
+
+printfn "Final positions: head (%d, %d), tail (%d, %d)" hX, hY, tX, tY
+
+printfn "%d positions occupied by the tail" (tailPositions.Count)
