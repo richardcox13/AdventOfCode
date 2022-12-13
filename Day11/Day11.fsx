@@ -10,7 +10,9 @@ type Operation = | Add of int
                  | Sequare
 
 type Money = {
-    mutable Items: int[];
+    // Use queue to pop from front as money examines and throws the items
+    // and push on the back when caught
+    Items: Queue<int>;
     mutable Inspections: int;
     Operation: Operation;
     TestDivisor: int;
@@ -20,7 +22,7 @@ type Money = {
 
 let testInput = [|
     {
-        Items = [| 79; 98 |];
+        Items = Queue([| 79; 98 |]);
         Inspections = 0;
         Operation = Multiply(10);
         TestDivisor = 23;
@@ -28,15 +30,15 @@ let testInput = [|
         TestFail = 3
     };
     {
-        Items = [| 54; 65; 75; 74 |];
+        Items = Queue([| 54; 65; 75; 74 |]);
         Inspections = 0;
         Operation = Add(6);
         TestDivisor = 19;
         TestPass = 2;
         TestFail = 0
     };
-        {
-        Items = [| 79; 60; 97 |];
+    {
+        Items = Queue([| 79; 60; 97 |]);
         Inspections = 0;
         Operation = Sequare;
         TestDivisor = 13;
@@ -44,7 +46,7 @@ let testInput = [|
         TestFail = 3
     };
     {
-        Items = [| 74 |];
+        Items = Queue([| 74 |]);
         Inspections = 0;
         Operation = Add(3);
         TestDivisor = 17;
