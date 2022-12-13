@@ -155,7 +155,7 @@ let testInput = [|
     "noop";
 |]
 
-let input = (* File.ReadAllLines("./Day10.txt") // *)  testInput
+let input = File.ReadAllLines("./Day10.txt") // testInput
 
 let checkCycleCounts = [| 20; 60; 100; 140; 180; 220 |]
 
@@ -205,6 +205,7 @@ printfn "Part 1: Sum of signal strength: %d" total
 let horizontalLen = 40
 let veritcalLen = 6
 
+printfn "Part 2:"
 for cycle in 1..(horizontalLen*veritcalLen) do
     let hPos = cycle % horizontalLen
     // Because mixing of 0 based and 1 based indexing
@@ -224,3 +225,5 @@ for cycle in 1..(horizontalLen*veritcalLen) do
 
     if hPos = 0 then
         printfn ""
+
+printfn ""
