@@ -200,5 +200,27 @@ let part1Res = res
                 |> Seq.toArray
 
 let total = part1Res |> Seq.sumBy (fun (_, _, x) -> x)
+printfn "Part 1: Sum of signal strength: %d" total
 
-printfn "Sum of signal strength: %d" total
+let horizontalLen = 40
+let veritcalLen = 6
+
+for cycle in 1..(horizontalLen*veritcalLen) do
+    let hPos = cycle % horizontalLen
+    // Because mixing of 0 based and 1 based indexing
+    let hPosAdj = if hPos = 0 then horizontalLen-1 else hPos-1
+
+    if hPos = 1 then
+        printf "%3d: " cycle
+
+    let getCycleX c =
+        if c < 0 then -100 else (snd res[c])
+
+    let spritePos = getCycleX cycle
+    if abs (spritePos - hPosAdj) <= 1 then
+        printf "#"
+    else
+        printf "."
+
+    if hPos = 0 then
+        printfn ""
