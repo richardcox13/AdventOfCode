@@ -155,7 +155,8 @@ let testInput = [|
     "noop";
 |]
 
-let input = File.ReadAllLines("./Day10.txt") //  testInput
+let input = (* File.ReadAllLines("./Day10.txt") // *)  testInput
+
 let checkCycleCounts = [| 20; 60; 100; 140; 180; 220 |]
 
 type MocpInstruction =
@@ -189,14 +190,15 @@ let initialState = (0, 1, 1)
 let res= input
                 |> Seq.collect decodeInstruction
                 |> Seq.scan processInstruction initialState
+                |> Seq.map (fun (a, b, _) -> (a, b))
                 //|> Seq.map (fun (c, x, nx) -> printfn "%d: %d (next %d)" c x nx; (c, x, nx))
-                |> Seq.where (fun (c, _, _) -> Array.contains c checkCycleCounts)
-                |> Seq.map (fun (c, x, _) -> (c, x, c*x))
                 |> Seq.toArray
 
-// for a in res do
-//     printfn "%A" a
+let part1Res = res
+                |> Seq.where (fun (c, _) -> Array.contains c checkCycleCounts)
+                |> Seq.map (fun (c, x) -> (c, x, c*x))
+                |> Seq.toArray
 
-let total = res |> Seq.sumBy (fun (_, _, x) -> x)
+let total = part1Res |> Seq.sumBy (fun (_, _, x) -> x)
 
 printfn "Sum of signal strength: %d" total
