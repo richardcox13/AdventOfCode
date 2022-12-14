@@ -12,7 +12,7 @@ type Operation = | Add of int
 type Monkey = {
     // Use queue to pop from front as money examines and throws the items
     // and push on the back when caught
-    Items: Queue<int>;
+    mutable Items: int[];
     mutable Inspections: int;
     Operation: Operation;
     TestDivisor: int;
@@ -22,7 +22,7 @@ type Monkey = {
 
 let testInput = [|
     {
-        Items = Queue([| 79; 98 |]);
+        Items = [| 79; 98 |];
         Inspections = 0;
         Operation = Multiply(19);
         TestDivisor = 23;
@@ -30,7 +30,7 @@ let testInput = [|
         TestFail = 3
     };
     {
-        Items = Queue([| 54; 65; 75; 74 |]);
+        Items = [| 54; 65; 75; 74 |];
         Inspections = 0;
         Operation = Add(6);
         TestDivisor = 19;
@@ -38,7 +38,7 @@ let testInput = [|
         TestFail = 0
     };
     {
-        Items = Queue([| 79; 60; 97 |]);
+        Items = [| 79; 60; 97 |];
         Inspections = 0;
         Operation = Square;
         TestDivisor = 13;
@@ -46,7 +46,7 @@ let testInput = [|
         TestFail = 3
     };
     {
-        Items = Queue([| 74 |]);
+        Items = [| 74 |];
         Inspections = 0;
         Operation = Add(3);
         TestDivisor = 17;
@@ -65,11 +65,12 @@ let oneMoneyOnrRound (m : Monkey) item =
         | Multiply n -> i*n
         | Square -> i*i
 
+    let appendArray a i =
+        Array.append a [| i |]
+
     let newItem = (updateItem item) / 3
-    if newItem % m.TestDivisor = 0 then
-        monkeys[m.TestPass].Items.Enqueue(newItem)
-    else
-        monkeys[m.TestFail].Items.Enqueue(newItem)
+    let target = monkeys[if newItem % m.TestDivisor = 0 then m.TestPass else m.TestFail]
+    target.Items <- appendArray target.Items newItem
     m.Inspections <- m.Inspections+1
 
 let printMoney n m =
@@ -84,6 +85,14 @@ let printAll msg =
 
 printAll "Before Any Inspections:"
 
-oneMoneyOnrRound monkeys[0] (monkeys[0].Items.Dequeue())
+let m0 = monkeys[0].Items |> Array.head
+oneMoneyOnrRound monkeys[0] m0
+monkeys[0].Items <- Array.skip 1  monkeys[0].Items
 
-printAll "After one Inspections:"
+printAll "After one Inspection:"
+
+let m1 = monkeys[0].Items |> Array.head
+oneMoneyOnrRound monkeys[0] m1
+monkeys[0].Items <- Array.skip 1  monkeys[0].Items
+
+printAll "After two Inspections:"
