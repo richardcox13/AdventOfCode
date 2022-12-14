@@ -7,9 +7,9 @@ open System.Text.RegularExpressions
 
 type Operation = | Add of int
                  | Multiply of int
-                 | Sequare
+                 | Square
 
-type Money = {
+type Monkey = {
     // Use queue to pop from front as money examines and throws the items
     // and push on the back when caught
     Items: Queue<int>;
@@ -24,7 +24,7 @@ let testInput = [|
     {
         Items = Queue([| 79; 98 |]);
         Inspections = 0;
-        Operation = Multiply(10);
+        Operation = Multiply(19);
         TestDivisor = 23;
         TestPass = 2;
         TestFail = 3
@@ -40,7 +40,7 @@ let testInput = [|
     {
         Items = Queue([| 79; 60; 97 |]);
         Inspections = 0;
-        Operation = Sequare;
+        Operation = Square;
         TestDivisor = 13;
         TestPass = 1;
         TestFail = 3
@@ -55,3 +55,35 @@ let testInput = [|
     };
 |]
 
+
+let monkeys = testInput
+
+let oneMoneyOnrRound (m : Monkey) item =
+    let updateItem i =
+        match m.Operation with
+        | Add n -> i+n
+        | Multiply n -> i*n
+        | Square -> i*i
+
+    let newItem = (updateItem item) / 3
+    if newItem % m.TestDivisor = 0 then
+        monkeys[m.TestPass].Items.Enqueue(newItem)
+    else
+        monkeys[m.TestFail].Items.Enqueue(newItem)
+    m.Inspections <- m.Inspections+1
+
+let printMoney n m =
+    printfn "Monkey #%d: Inspections: %d" n m.Inspections
+    printfn "  Items: %s" (m.Items |> Seq.map (fun x -> x.ToString()) |> String.concat ", ")
+
+let printAll msg =
+    printfn ""
+    printfn "%s" msg
+    for m in (monkeys |> Seq.mapi (fun idx m -> (idx, m))) do
+        printMoney (fst m) (snd m)
+
+printAll "Before Any Inspections:"
+
+oneMoneyOnrRound monkeys[0] (monkeys[0].Items.Dequeue())
+
+printAll "After one Inspections:"
