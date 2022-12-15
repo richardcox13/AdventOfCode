@@ -58,7 +58,7 @@ let testInput = [|
 
 let monkeys = testInput
 
-let oneMoneyOnrRound (m : Monkey) item =
+let oneMonkeyOneItem (m : Monkey) item =
     let updateItem i =
         match m.Operation with
         | Add n -> i+n
@@ -73,6 +73,11 @@ let oneMoneyOnrRound (m : Monkey) item =
     target.Items <- appendArray target.Items newItem
     m.Inspections <- m.Inspections+1
 
+let oneMonkeyOneRound (m: Monkey) =
+    let items = m.Items
+    m.Items <- [||]
+    items |> Seq.iter (fun item -> oneMonkeyOneItem m item)
+
 let printMoney n m =
     printfn "Monkey #%d: Inspections: %d" n m.Inspections
     printfn "  Items: %s" (m.Items |> Seq.map (fun x -> x.ToString()) |> String.concat ", ")
@@ -83,16 +88,9 @@ let printAll msg =
     for m in (monkeys |> Seq.mapi (fun idx m -> (idx, m))) do
         printMoney (fst m) (snd m)
 
-printAll "Before Any Inspections:"
+printAll "Before Any Monkeys Act:"
 
-let m0 = monkeys[0].Items |> Array.head
-oneMoneyOnrRound monkeys[0] m0
-monkeys[0].Items <- Array.skip 1  monkeys[0].Items
+oneMonkeyOneRound monkeys[0]
 
-printAll "After one Inspection:"
+printAll "After one Monkey's inspected all ites items:"
 
-let m1 = monkeys[0].Items |> Array.head
-oneMoneyOnrRound monkeys[0] m1
-monkeys[0].Items <- Array.skip 1  monkeys[0].Items
-
-printAll "After two Inspections:"
