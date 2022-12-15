@@ -93,7 +93,18 @@ let printAll msg =
 
 printAll "Start:"
 
-oneRound ()
+for x in 1..20 do
+    oneRound ()
 
-printAll "After one round:"
+printAll "After 20 rounds:"
 
+let topTwoInspections = monkeys
+                            |> Seq.sortByDescending (fun m -> m.Inspections)
+                            |> Seq.take 2
+                            |> Seq.map (fun m -> m.Inspections)
+                            |> Seq.toArray
+
+
+printfn "Monkey business = %d (= %d x %d)"
+    (topTwoInspections[0] * topTwoInspections[1])
+    topTwoInspections[0] topTwoInspections[1] 
