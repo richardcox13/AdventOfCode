@@ -55,8 +55,74 @@ let testInput = [|
     };
 |]
 
+let realInput = [|
+    {   // 0
+        Items = [|65; 58; 93; 57; 66|];
+        Inspections = 0;
+        Operation = Multiply(7);
+        TestDivisor = 19;
+        TestPass = 6;
+        TestFail = 4;
+    };
+    {   // 1
+        Items = [| 76; 97; 58; 72; 57; 92; 82 |];
+        Inspections = 0;
+        Operation = Add(4);
+        TestDivisor = 3;
+        TestPass = 7;
+        TestFail = 5;
+    };
+    {   // 2
+        Items = [| 90; 89; 96 |];
+        Inspections = 0;
+        Operation = Multiply(5);
+        TestDivisor = 13;
+        TestPass = 5;
+        TestFail = 1;
+    };
+    {   // 3
+        Items = [| 72; 63; 72; 99 |];
+        Inspections = 0;
+        Operation = Square;
+        TestDivisor = 17;
+        TestPass = 0;
+        TestFail = 4;
+    };
+    {   // 4
+        Items = [| 65 |];
+        Inspections = 0;
+        Operation = Add(1);
+        TestDivisor = 2;
+        TestPass = 6;
+        TestFail = 2;
+    };
+    {   // 5
+        Items = [| 97; 71 |];
+        Inspections = 0;
+        Operation = Add(8);
+        TestDivisor = 11;
+        TestPass = 7;
+        TestFail = 3;
+    };
+    {   // 6
+        Items = [| 83; 68; 88; 55; 87; 67 |];
+        Inspections = 0;
+        Operation = Add(2);
+        TestDivisor = 5;
+        TestPass = 2;
+        TestFail = 1;
+    };
+    {   // 7
+        Items = [| 64; 81; 50; 96; 82; 53; 62; 92 |];
+        Inspections = 0;
+        Operation = Add(5);
+        TestDivisor = 7;
+        TestPass = 3;
+        TestFail = 0;
+    };
+|]
 
-let monkeys = testInput
+let monkeys = realInput // testInput
 
 let oneMonkeyOneItem (m : Monkey) item =
     let updateItem i =
