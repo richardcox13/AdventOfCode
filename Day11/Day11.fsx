@@ -78,6 +78,9 @@ let oneMonkeyOneRound (m: Monkey) =
     m.Items <- [||]
     items |> Seq.iter (fun item -> oneMonkeyOneItem m item)
 
+let oneRound () =
+    monkeys |> Seq.iter oneMonkeyOneRound
+
 let printMoney n m =
     printfn "Monkey #%d: Inspections: %d" n m.Inspections
     printfn "  Items: %s" (m.Items |> Seq.map (fun x -> x.ToString()) |> String.concat ", ")
@@ -88,9 +91,9 @@ let printAll msg =
     for m in (monkeys |> Seq.mapi (fun idx m -> (idx, m))) do
         printMoney (fst m) (snd m)
 
-printAll "Before Any Monkeys Act:"
+printAll "Start:"
 
-oneMonkeyOneRound monkeys[0]
+oneRound ()
 
-printAll "After one Monkey's inspected all ites items:"
+printAll "After one round:"
 
