@@ -177,9 +177,13 @@ let oneMonkeyOneRound (m: Monkey) =
     m.Items <- [||]
     items |> Seq.iter (fun i -> oneMonkeyOneItem m i)
 
+let oneRound () =
+    monkeys |> Seq.iter oneMonkeyOneRound
+
+
 let printMonkey n m =
     printfn "Monkey #%d: Inspections: %d" n m.Inspections
-    printfn "  Items: %s" (m.Items |> Seq.map (fun x -> sprintf "%A" x) |> String.concat ", ")
+    printfn "  Items (%d): %s" (m.Items.Length)  (m.Items |> Seq.map (fun x -> sprintf "%A" x) |> String.concat ", ")
 
 let printAll msg =
     printfn ""
@@ -189,8 +193,11 @@ let printAll msg =
 
 printAll "Before:"
 
-oneMonkeyOneRound monkeys[0]
+let rounds = 4000
 
-printAll "After all items of monkey zero processed:"
+for r in 1..rounds do
+    oneRound ()
+
+printAll (sprintf "After %d rounds:" rounds)
 
 
