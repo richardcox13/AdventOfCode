@@ -171,6 +171,12 @@ let oneMonkeyOneItem (m : Monkey) item =
     target.Items <- appendArray target.Items item
     m.Inspections <- m.Inspections+1
 
+
+let oneMonkeyOneRound (m: Monkey) =
+    let items = m.Items
+    m.Items <- [||]
+    items |> Seq.iter (fun i -> oneMonkeyOneItem m i)
+
 let printMonkey n m =
     printfn "Monkey #%d: Inspections: %d" n m.Inspections
     printfn "  Items: %s" (m.Items |> Seq.map (fun x -> sprintf "%A" x) |> String.concat ", ")
@@ -183,12 +189,8 @@ let printAll msg =
 
 printAll "Before:"
 
-let m0 = monkeys[0]
-let m0Item0 = m0.Items |> Array.head
-m0.Items <- m0.Items |> Array.tail
+oneMonkeyOneRound monkeys[0]
 
-oneMonkeyOneItem m0 m0Item0
-
-printAll "After first item of monket zero processed:"
+printAll "After all items of monkey zero processed:"
 
 
