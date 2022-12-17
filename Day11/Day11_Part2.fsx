@@ -5,8 +5,8 @@ open System.Diagnostics
 open System.IO
 open System.Text.RegularExpressions
 
-type Operation = | Add of int
-                 | Multiply of int
+type Operation = | Add of int64
+                 | Multiply of int64
                  | Square
 
 type MonkeyInit = {
@@ -22,7 +22,7 @@ type MonkeyInit = {
 type Monkey = {
     // Use queue to pop from front as money examines and throws the items
     // and push on the back when caught
-    mutable Items: Dictionary<int, int64>[];
+    mutable Items: Dictionary<int64, int64>[];
     mutable Inspections: int;
     Operation: Operation;
     TestDivisor: int64;
@@ -127,8 +127,8 @@ let makeMoneys (mis: MonkeyInit[]) =
     
     let makeOneMoney (mi: MonkeyInit) =
         let makeOneItem item =
-            let moduli  = diviors |> Seq.map (fun d -> KeyValuePair(d, int64 (item % d)))
-            Dictionary<int, int64>(moduli)
+            let moduli  = diviors |> Seq.map (fun d -> KeyValuePair(int64 d, int64 (item % d)))
+            Dictionary<int64, int64>(moduli)
         let items = mi.Items |> Array.map makeOneItem
         {
             Items = items;
@@ -144,8 +144,51 @@ let makeMoneys (mis: MonkeyInit[]) =
 
 let monkeys =  makeMoneys (* realInput // *) testInput
 
+let oneMonkeyOneItem (m : Monkey) item =
+    let applyOperation i div =
+        let x = match m.Operation with
+                       | Add n -> i+n
+                       | Multiply n -> i*n
+                       | Square -> i*i
+        x % div
+
+    let applyOperationToItem (item: Dictionary<int64, int64>) =
+        // This updates the dictionary inplace
+        item |> Seq.iter (fun kv ->
+                                let k = kv.Key
+                                let v = kv.Value
+                                let nv = applyOperation v k
+                                item[k] <- nv
+                              )
+    let appendArray a i =
+        Array.append a [| i |]
+
+
+    applyOperationToItem item
+    // The modulus has been applied in applyOperation, so no need to divide again
+    let testInput = item[m.TestDivisor]
+    let target = monkeys[if testInput = 0 then m.TestPass else m.TestFail]
+    target.Items <- appendArray target.Items item
+    m.Inspections <- m.Inspections+1
+
 let printMonkey n m =
     printfn "Monkey #%d: Inspections: %d" n m.Inspections
     printfn "  Items: %s" (m.Items |> Seq.map (fun x -> sprintf "%A" x) |> String.concat ", ")
 
-printMonkey 0 monkeys[0]
+let printAll msg =
+    printfn ""
+    printfn "%s" msg
+    for m in (monkeys |> Seq.mapi (fun idx m -> (idx, m))) do
+        printMonkey (fst m) (snd m)
+
+printAll "Before:"
+
+let m0 = monkeys[0]
+let m0Item0 = m0.Items |> Array.head
+m0.Items <- m0.Items |> Array.tail
+
+oneMonkeyOneItem m0 m0Item0
+
+printAll "After first item of monket zero processed:"
+
+
