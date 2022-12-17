@@ -142,7 +142,7 @@ let makeMoneys (mis: MonkeyInit[]) =
     mis |> Array.map makeOneMoney
 
 
-let monkeys =  makeMoneys (* realInput // *) testInput
+let monkeys =  makeMoneys realInput // testInput
 
 let oneMonkeyOneItem (m : Monkey) item =
     let applyOperation i div =
