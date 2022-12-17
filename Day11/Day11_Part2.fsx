@@ -193,11 +193,20 @@ let printAll msg =
 
 printAll "Before:"
 
-let rounds = 4000
+let rounds = 10000
 
 for r in 1..rounds do
     oneRound ()
 
 printAll (sprintf "After %d rounds:" rounds)
 
+let busiest = monkeys
+            |> Seq.map (fun m -> int64 m.Inspections)
+            |> Seq.sortDescending
+            |> Seq.take 2
+            |> Seq.toArray
+let (b0, b1) = (busiest[0], busiest[1])
+
+printfn "Two highest inspection counts: %d %d" b0 b1
+printfn "Monkey business = %d" (b0*b1)
 
