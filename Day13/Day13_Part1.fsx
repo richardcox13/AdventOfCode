@@ -51,7 +51,7 @@ let (|PackeStart|_|) (input: string) =
 
 let (|PacketEnd|_|) (input: string) =
     if input.Length > 0 && input[0] = ']' then
-        Some (input.Substring(1))
+        Some (input.Substring(1).TrimStart(','))
     else
         None
 
@@ -71,10 +71,10 @@ let (|Number|_|) (input: string) =
 
 let parsePacket (input: string) =
     let rec doParse input (currentSeq: Packet list) =
-        printfn "Matching: %s" input
+        //printfn "Matching: %s" input
         match input with
         | "" ->
-            printfn "Empty input: current seq: %s" (currentSeq |> Seq.map (fun p -> p.ToString()) |> String.concat "//")
+            //printfn "Empty input: current seq: %s" (currentSeq |> Seq.map (fun p -> p.ToString()) |> String.concat "//")
             (currentSeq, "")
         | PackeStart rest ->
             let (innerSeq, rr) = doParse rest []
@@ -84,12 +84,17 @@ let parsePacket (input: string) =
         | Number (n, rest) ->
             doParse rest (currentSeq @ [Value(n)])
         | _ -> raise(UnreachableException(sprintf "Failed to match \"%s\"" input))
-    let res = doParse input []
-    fst res
 
-let pp = Sequence([Value(10); Value(13)])
-printfn "pp: %s" (pp.ToString())
+    // All inputs are surrounded by "[" and "]": strip them off...
+    let inp = input.Substring(1, input.Length-2)
+    let res = doParse inp []
+    assert((snd res).Length = 0)
+    Sequence(fst res)
 
-let x = parsePacket "[1,2]"
-printfn ">>%s<<" (x.ToString())
+let testParse input =
+    let res = parsePacket input
+    printfn "\"%s\" --> %s" input (res.ToString())
+
+for i in (testInput |> Seq.filter (fun s -> s.Length > 0)) do
+    testParse i
 
