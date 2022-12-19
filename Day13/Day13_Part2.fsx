@@ -143,3 +143,13 @@ let packets = Seq.append inputPackets [| marker1; marker2 |]
 
 for (idx, p)  in (packets |> Seq.mapi (fun idx p -> (idx, p))) do
     printfn "%2d: %s" idx (p.ToString())
+
+let findPacket ps p = ps |> Seq.findIndex (fun pp -> Packet.comparePackets p pp = 0)
+
+let marker1Index = 1 + findPacket packets marker1
+printfn "Marker 1 (%s) at index %d" (marker1.ToString()) marker1Index
+let marker2Index = 1 + findPacket packets marker2
+printfn "Marker 2 (%s) at index %d" (marker2.ToString()) marker2Index
+
+printfn "Decoder key = %d" (marker1Index * marker2Index
+)
