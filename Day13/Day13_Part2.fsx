@@ -35,7 +35,7 @@ let rawTestInput = "
 let testInput = rawTestInput.Trim().Split("\r\n")
                         |> Seq.where (fun l -> l.Length > 0)
 
-let inputArray = File.ReadAllLines("./Day13.txt") //testInput
+let inputArray = (* File.ReadAllLines("./Day13.txt") // *)testInput
 
 type Packet = 
         | Value of int
@@ -132,3 +132,14 @@ let parsePacket (input: string) =
     assert((snd res).Length = 0)
     Sequence(fst res)
 
+
+let marker1 = Sequence([Sequence([Value(2)])])
+let marker2 = Sequence([Sequence([Value(6)])])
+
+let inputPackets = inputArray
+                            |> Seq.map (fun inp -> parsePacket inp)
+let packets = Seq.append inputPackets [| marker1; marker2 |]
+                            |> Seq.sortWith Packet.comparePackets
+
+for (idx, p)  in (packets |> Seq.mapi (fun idx p -> (idx, p))) do
+    printfn "%2d: %s" idx (p.ToString())
