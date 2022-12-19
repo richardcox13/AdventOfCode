@@ -35,7 +35,10 @@ let rawTestInput = "
 let testInput = rawTestInput.Trim().Split("\r\n")
                         |> Seq.where (fun l -> l.Length > 0)
 
-let inputArray = (* File.ReadAllLines("./Day13.txt") // *)testInput
+let realInput = File.ReadAllLines("./Day13.txt")
+                        |> Seq.where (fun l -> l.Length > 0)
+
+let inputArray = realInput // testInput
 
 type Packet = 
         | Value of int
