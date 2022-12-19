@@ -34,6 +34,8 @@ let rawTestInput = "
 
 let testInput = rawTestInput.Trim()
 
+let inputString = File.ReadAllText("./Day13.txt") //testInput
+
 type Packet = 
         | Value of int
         // Can have a zero length list...
@@ -134,7 +136,7 @@ let testParse input =
     printfn "\"%s\" --> %s" input (res.ToString())
 
 
-let input = testInput.Split("\r\n\r\n") 
+let input = inputString.Split("\r\n\r\n") 
                 |> Array.mapi (fun idx s ->
                                 let ss = s.Split("\r\n")
                                 assert(ss.Length = 2)
