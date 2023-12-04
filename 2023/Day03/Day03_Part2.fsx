@@ -97,17 +97,40 @@ let asterisks = findAllAsterisks inputArray |> Seq.toList
 printfn $"There are {asterisks |> List.length} asterisks"
 printfn ""
 
-let matchingRow = asterisks
-                |> Seq.where (fun (aRow, aCol) ->
+let gearPairs = asterisks
+                |> Seq.map (fun (aRow, aCol) ->
                     let foundInRow r = numbers |> Seq.exists (fun (nRow, _, _)  -> nRow = r)
+                    // Find all the numbers adjacent to this asterisk
+                    let verticallyAdjacent =
+                        numbers |> Seq.where (fun (nRow, _, _) ->
+                                                nRow >= aRow-1 && nRow <= aRow+1
+                                             )
+                    let adjacent =
+                        verticallyAdjacent
+                            |> Seq.where (fun (_, nCol, value) ->
+                                            let first = nCol
+                                            let last = nCol + value.Length - 1
 
-                    (foundInRow (aRow - 1))
-                        || (foundInRow aRow)
-                        || (foundInRow (aRow + 1))
+                                            first <= (aCol+1) && last >= (aCol-1)
+                                         )
+                            |> Seq.toArray
+                    let l = adjacent |> Array.length
+                    if l > 2 then
+                        printfn $"Have %d{l} numbers adjacent to the same asterisk (%d{aRow},%d{aCol}): %A{adjacent}"
+                    adjacent
                 )
+                |> Seq.where (fun adj -> (adj |> Array.length) = 2)
+                |> Seq.toList
 
-printfn $"There are {matchingRow |> Seq.length} '*' with a number above, same row, or below"
+printfn $"There are {gearPairs |> Seq.length} gear pairs"
+// printfn ""
+// for pair in gearPairs do
+//     printfn "[%s]" (pair |> Array.map (fun (_, _, value) -> value) |> String.concat "-")
 
-// let res = resSeq |> Seq.map (fun (_, _, value) -> Int32.Parse(value))
-//                  |> Seq.sum
-// printfn $"Result = {res}"
+printfn ""
+
+let res = gearPairs
+                |> Seq.map (fun pair -> pair |> Array.map (fun (_, _, value) -> value))
+                |> Seq.map (fun pair -> Int32.Parse(pair[0]) * Int32.Parse(pair[1]))
+                |> Seq.sum
+printfn $"Result = {res}"
