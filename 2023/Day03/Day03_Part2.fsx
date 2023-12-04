@@ -53,7 +53,7 @@ let findPossiblePartNumbers (input: string[]) =
                         |> Seq.map (fun s -> row, s.Col, s.NewValue)
     }
 
-let isSymbolInRun (input: string[]) row col length =
+let isAsteriskInRun (input: string[]) row col length =
     if row < 0 || row >= input.Length then
         // Nothing to find on a row that does not exist!
         false
@@ -67,22 +67,47 @@ let isSymbolInRun (input: string[]) row col length =
         seq { first..last }
             |> Seq.exists (fun col ->
                 let c = inp[col]
-                not (Char.IsAsciiDigit(c) || c = '.' )
+                c = '*' 
             )
 
-let isSymbolFound input row col length =
-    (isSymbolInRun input (row-1) col length)
-        || (isSymbolInRun input row col length)
-        || (isSymbolInRun input (row+1) col length)
+let isAsteriskAdjacent input row col length =
+    (isAsteriskInRun input (row-1) col length)
+        || (isAsteriskInRun input row col length)
+        || (isAsteriskInRun input (row+1) col length)
 
-let resSeq = findPossiblePartNumbers inputArray
+let findAllAsterisks (input: string[]) =
+    let rows = input.Length
+    let cols = input[0].Length
+    seq {
+        for r in 0..(rows-1) do
+            for c in 0..(cols-1) do
+                if input[r][c] = '*' then
+                    yield (r, c)
+    }
+
+let numbers = findPossiblePartNumbers inputArray
             //|> Seq.take 10 (**** DON'T FORGET THIS ****)
-            |> Seq.where (fun (row, col, value) -> isSymbolFound inputArray row col (value.Length))
+            |> Seq.where (fun (row, col, value) -> isAsteriskAdjacent inputArray row col (value.Length))
             |> Seq.toList
-//resSeq |> Seq.iter (fun (row, col, chr) -> printf $"({row},{col}) '{chr}' ")
-resSeq |> Seq.iter (fun x -> printf $"%A{x}")
+//resSeq |> Seq.iter (fun x -> printf $"%A{x}")
+printfn ""
+printfn $"There are {numbers |> List.length} numbers next to a '*'"
+printfn ""
+let asterisks = findAllAsterisks inputArray |> Seq.toList
+printfn $"There are {asterisks |> List.length} asterisks"
 printfn ""
 
-let res = resSeq |> Seq.map (fun (_, _, value) -> Int32.Parse(value))
-                 |> Seq.sum
-printfn $"Result = {res}"
+let matchingRow = asterisks
+                |> Seq.where (fun (aRow, aCol) ->
+                    let foundInRow r = numbers |> Seq.exists (fun (nRow, _, _)  -> nRow = r)
+
+                    (foundInRow (aRow - 1))
+                        || (foundInRow aRow)
+                        || (foundInRow (aRow + 1))
+                )
+
+printfn $"There are {matchingRow |> Seq.length} '*' with a number above, same row, or below"
+
+// let res = resSeq |> Seq.map (fun (_, _, value) -> Int32.Parse(value))
+//                  |> Seq.sum
+// printfn $"Result = {res}"
