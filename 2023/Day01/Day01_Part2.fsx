@@ -1,5 +1,5 @@
 //
-// Day01 Part2
+// Day 1 Part 2
 //
 // Usage
 //  dotnet fsi .\Day01_Paet2.fsx <input-file>
