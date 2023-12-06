@@ -23,7 +23,8 @@ type GardenMapper =
             mm.DestinationStart + offset
         | None -> value
 
-type MappersToApply ={
+type MappersToApply =
+    {
         SeedToSoil: GardenMapper
         SoilToFertiliser: GardenMapper
         FertiliserToWater: GardenMapper
@@ -32,6 +33,15 @@ type MappersToApply ={
         TemperatureToHumidity: GardenMapper
         HumidityToLocation: GardenMapper
     }
+    member maps.getLocationForSeed seed =
+        let soil = maps.SeedToSoil.Map seed
+        let fertiliser = maps.SoilToFertiliser.Map soil
+        let water = maps.FertiliserToWater.Map fertiliser
+        let light = maps.WaterToLight.Map water
+        let temp = maps.LightToTemperature.Map light
+        let humidity = maps.TemperatureToHumidity.Map temp
+        let location = maps.HumidityToLocation.Map humidity
+        location
 
 type SeedAndRange = {
         Seed: int64
@@ -109,17 +119,6 @@ let nameMaps mapsArray =
         HumidityToLocation = (findMap "humidity")
     }
 
-let getLocationForSeed maps seed =
-    let soil = maps.SeedToSoil.Map seed
-    let fertiliser = maps.SoilToFertiliser.Map soil
-    let water = maps.FertiliserToWater.Map fertiliser
-    let light = maps.WaterToLight.Map water
-    let temp = maps.LightToTemperature.Map light
-    let humidity = maps.TemperatureToHumidity.Map temp
-    let location = maps.HumidityToLocation.Map humidity
-
-    location
-
 
 [<EntryPoint>]
 let main(args) =
@@ -147,7 +146,7 @@ let main(args) =
                 |> Seq.mapi (fun idx s ->
                         printfn $"{DateTime.Now.TimeOfDay} Starting seed #{idx} (start={s.Seed}, Range={s.Range})"
                         seq { s.Seed..(s.Seed + s.Range - 1L) }
-                            |> Seq.map (fun seed -> seed |> getLocationForSeed maps)
+                            |> Seq.map (fun seed -> seed |> maps.getLocationForSeed )
                     )
                 |> Seq.concat
                 |> Seq.min
