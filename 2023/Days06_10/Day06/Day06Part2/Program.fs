@@ -2,29 +2,31 @@
 
 
 type Race = {
-        Time: int
-        DistanceRecord: int
+        Time: int64
+        DistanceRecord: int64
     }
 
 type RaceResult = {
-        ChargeTime: int
-        DistanceMoved: int
+        ChargeTime: int64
+        DistanceMoved: int64
     }
 
 let readInput filename =
     let parseOneLine (line: string) =
         let nosStr = ((line.Split(':'))[1]).Trim()
-        nosStr.Split(' ', StringSplitOptions.RemoveEmptyEntries)
-                        |> Seq.map(fun s -> Int32.Parse(s))
-    let content = System.IO.File.ReadAllLines(filename)
-    let times = parseOneLine content[0]
-    let records = parseOneLine content[1]
+        let r = Int64.Parse(nosStr.Trim().Replace(" ", ""))
+        r
 
-    (times, records) ||>Seq.map2 (fun t r -> { Time = t; DistanceRecord = r })
+    let content = System.IO.File.ReadAllLines(filename)
+    let time = parseOneLine content[0]
+    let record = parseOneLine content[1]
+
+    // Part 2 doesn't need a collection, but saves on refactoring...
+    Seq.singleton { Time = time; DistanceRecord = record }
 
 let calcApproachesToRace race =
     assert (race.Time > 1)
-    seq { 1..(race.Time-1) }
+    seq { 1L..(race.Time-1L) }
         |> Seq.map (fun chargeTime ->
                 let moveTime = race.Time - chargeTime
                 let distance = moveTime * chargeTime
@@ -48,8 +50,8 @@ let main(args) =
           //|> Seq.take 1  (* ***** FOR TESTING ***** *)
           |> Seq.map (fun r ->
                 printfn $"Calculating ways for race of time {r.Time} (record is {r.DistanceRecord})"
-                let options = calcApproachesToRace r |> Seq.toArray
-                printfn "   Results: %s" (options |> Seq.map(fun res -> $"(charge={res.ChargeTime}; dist={res.DistanceMoved})") |> String.concat ", ")
+                let options = calcApproachesToRace r (*|> Seq.toArray*)
+                //printfn "   Results: %s" (options |> Seq.map(fun res -> $"(charge={res.ChargeTime}; dist={res.DistanceMoved})") |> String.concat ", ")
                 let count =
                     options
                         |> Seq.where (fun rr -> rr.DistanceMoved > r.DistanceRecord)
