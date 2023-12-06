@@ -3,6 +3,11 @@ open System.Collections.Generic
 open System.IO
 open System.Text.RegularExpressions
 
+type StartAndRange = {
+        Start: int64
+        Range: int64
+    }
+
 type GardenMapRow = {
         SourceStart: int64
         DestinationStart: int64
@@ -22,6 +27,52 @@ type GardenMapper =
             let offset = value - mm.SourceStart
             mm.DestinationStart + offset
         | None -> value
+    member mapper.MapRange (rangeIn: StartAndRange) =
+        // find all the maps that overlap with inp
+        let maps = mapper.Maps
+                |> Seq.where (fun m -> m.SourceStart < (rangeIn.Start+rangeIn.Range) && (m.SourceStart+m.Range) >= rangeIn.Start)
+                |> Seq.sortBy _.SourceStart
+                |> Seq.toArray
+
+        let rec InnerMapRange (inp: StartAndRange) mapsIndex=
+            seq {
+                assert (mapsIndex <= maps.Length)
+
+                let (firstResult, secondResult, remainingRange) = 
+                    if mapsIndex = maps.Length then
+                        // No more maps! Remaider remains
+                        inp, None, 0L
+                    else
+                        let firstMap = maps[mapsIndex]
+                        if firstMap.SourceStart <= inp.Start then
+                            let startOffset = inp.Start - firstMap.SourceStart
+                            let destStart = firstMap.DestinationStart + startOffset
+                            assert (firstMap.Range - startOffset >= 0)
+                            let destRange = Math.Min(firstMap.Range - startOffset, inp.Range)
+                            let remainingInputRange = inp.Range - destRange
+                            assert (remainingInputRange >= 0)
+                            { Start = destStart; Range = destRange }, None, remainingInputRange
+                        else
+                            // With input range starting before map, there will be two results
+                            // one without any adjustments and then one for the mapping
+                            let startOffset = firstMap.SourceStart - inp.Start
+                            let firstResult = { Start = inp.Start; Range = startOffset }
+
+                            let secondDestRange = Math.Min(inp.Range - startOffset, firstMap.Range)
+                            assert (secondDestRange > 0)
+                            let secondDestStart = firstMap.DestinationStart + startOffset
+                            let secondResutl = { Start = secondDestStart; Range = secondDestRange }
+                            let remainingInputRange = inp.Range - startOffset - secondDestRange
+                            assert (remainingInputRange >= 0)
+                            firstResult, Some secondResutl, remainingInputRange
+                yield firstResult
+                if secondResult.IsSome then
+                    yield secondResult.Value
+                if remainingRange > 0 then
+                    let remainingInput = { Start = rangeIn.Start + rangeIn.Range - remainingRange; Range = remainingRange }
+                    yield! InnerMapRange remainingInput (mapsIndex+1)
+            }
+        InnerMapRange rangeIn 0 |> Seq.toArray
 
 type MappersToApply =
     {
@@ -33,7 +84,7 @@ type MappersToApply =
         TemperatureToHumidity: GardenMapper
         HumidityToLocation: GardenMapper
     }
-    member maps.getLocationForSeed seed =
+    member maps.GetLocationForSeed seed =
         let soil = maps.SeedToSoil.Map seed
         let fertiliser = maps.SoilToFertiliser.Map soil
         let water = maps.FertiliserToWater.Map fertiliser
@@ -42,11 +93,15 @@ type MappersToApply =
         let humidity = maps.TemperatureToHumidity.Map temp
         let location = maps.HumidityToLocation.Map humidity
         location
-
-type SeedAndRange = {
-        Seed: int64
-        Range: int64
-    }
+    member maps.GetLocationForSeedRange seed =
+        let soil = maps.SeedToSoil.MapRange seed
+        let fertiliser = soil |> Seq.map (fun x -> maps.SoilToFertiliser.MapRange x) |> Seq.concat |> Seq.toArray
+        let water = fertiliser |> Seq.map (fun x -> maps.FertiliserToWater.MapRange x) |> Seq.concat |> Seq.toArray
+        let light = water |> Seq.map (fun x -> maps.WaterToLight.MapRange x) |> Seq.concat |> Seq.toArray
+        let temp = light |> Seq.map (fun x -> maps.LightToTemperature.MapRange x) |> Seq.concat |> Seq.toArray
+        let humidity = temp |> Seq.map (fun x -> maps.TemperatureToHumidity.MapRange x) |> Seq.concat |> Seq.toArray
+        let location = humidity |> Seq.map (fun x ->  maps.HumidityToLocation.MapRange x) |> Seq.concat |> Seq.toArray
+        location
 
 let loadGardenMap (title: string) (rows: string[]) =
     //printf $"Title: {title}, {rows.Length} map lines"
@@ -77,11 +132,11 @@ let readSeeds (input: string) =
         |> Seq.chunkBySize 2
         |> Seq.map (fun ss ->
                         assert (ss.Length = 2)
-                        { Seed = ss[0]; Range = ss[1] }
+                        { Start = ss[0]; Range = ss[1] }
                    )
         |> Seq.toArray
 
-let processInputFile filename : SeedAndRange[] * GardenMapper seq =
+let processInputFile filename : StartAndRange[] * GardenMapper seq =
     let inputText = File.ReadAllLines(filename)
     printfn $"InputText has {inputText.Length} elements"
     let seeds = readSeeds inputText[0]
@@ -126,11 +181,13 @@ let main(args) =
     //printfn "env.cmdline: %A" <| Environment.GetCommandLineArgs()
     //printfn $"Working folder: {Environment.CurrentDirectory}"
 
+    let sw = System.Diagnostics.Stopwatch.StartNew ()
+
     let filename = args[0]
 
     let (seeds, mapsArray) = processInputFile filename
     printfn "Loaded..."
-    printfn "  Seeds: %s" (seeds |> Array.map (fun s -> $"{{ Seed={s.Seed}; Range={s.Range}}}") |> String.concat ",")
+    printfn "  Seeds: %s" (seeds |> Array.map (fun s -> $"{{ Start={s.Start}; Range={s.Range}}}") |> String.concat ",")
     for (idx, map) in (mapsArray |> Seq.mapi (fun idx m -> idx, m)) do
         printfn $"  Map #{idx} \"{map.From}\" to \"{map.To}\" has {map.Maps.Length} maps"
         let m0 = map.Maps[0]
@@ -141,16 +198,29 @@ let main(args) =
     // Define here, so can close over maps
 
     printfn ""
+    //let result = seeds
+    //            //|> Seq.take 1 (* ***** REMOVE ME! ***** *)
+    //            |> Seq.mapi (fun idx s ->
+    //                    printfn $"{DateTime.Now.TimeOfDay} Starting seed #{idx} (start={s.Start}, Range={s.Range})"
+    //                    seq { s.Start..(s.Start+ s.Range - 1L) }
+    //                        |> Seq.map (fun seed -> seed |> maps.GetLocationForSeed )
+    //                )
+    //            |> Seq.concat
+    //            |> Seq.min
+
     let result = seeds
                 //|> Seq.take 1 (* ***** REMOVE ME! ***** *)
                 |> Seq.mapi (fun idx s ->
-                        printfn $"{DateTime.Now.TimeOfDay} Starting seed #{idx} (start={s.Seed}, Range={s.Range})"
-                        seq { s.Seed..(s.Seed + s.Range - 1L) }
-                            |> Seq.map (fun seed -> seed |> maps.getLocationForSeed )
+                        let ts = sw.Elapsed.ToString("h':'mm':'ss'.'FFF")
+                        printfn $"{DateTime.Now.TimeOfDay} (+{ts}): Starting seed #{idx} (start={s.Start}, Range={s.Range})"
+                        s |> maps.GetLocationForSeedRange
+                          |> Seq.map _.Start
+                          |> Seq.min
                     )
-                |> Seq.concat
                 |> Seq.min
 
     printfn $"Result = {result}"
-
+    sw.Stop()
+    let ts = sw.Elapsed.ToString("h':'mm':'ss'.'FFF")
+    printfn $"Completed in +{ts}"
     0
