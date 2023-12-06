@@ -23,6 +23,16 @@ type GardenMapper =
             mm.DestinationStart + offset
         | None -> value
 
+type MappersToApply ={
+        SeedToSoil: GardenMapper
+        SoilToFertiliser: GardenMapper
+        FertiliserToWater: GardenMapper
+        WaterToLight: GardenMapper
+        LightToTemperature: GardenMapper
+        TemperatureToHumidity: GardenMapper
+        HumidityToLocation: GardenMapper
+    }
+
 type SeedAndRange = {
         Seed: int64
         Range: int64
@@ -89,7 +99,7 @@ let processInputFile filename : SeedAndRange[] * GardenMapper seq =
 
 let nameMaps mapsArray =
     let findMap name = mapsArray |> Seq.find (fun m -> m.From = name )
-    {|
+    {
         SeedToSoil = (findMap "seed")
         SoilToFertiliser = (findMap "soil")
         FertiliserToWater = (findMap "fertilizer")
@@ -97,7 +107,18 @@ let nameMaps mapsArray =
         LightToTemperature = (findMap "light")
         TemperatureToHumidity = (findMap "temperature")
         HumidityToLocation = (findMap "humidity")
-    |}
+    }
+
+let getLocationForSeed maps seed =
+    let soil = maps.SeedToSoil.Map seed
+    let fertiliser = maps.SoilToFertiliser.Map soil
+    let water = maps.FertiliserToWater.Map fertiliser
+    let light = maps.WaterToLight.Map water
+    let temp = maps.LightToTemperature.Map light
+    let humidity = maps.TemperatureToHumidity.Map temp
+    let location = maps.HumidityToLocation.Map humidity
+
+    location
 
 
 [<EntryPoint>]
@@ -119,16 +140,6 @@ let main(args) =
     let maps = nameMaps mapsArray
 
     // Define here, so can close over maps
-    let getLocationForSeed seed =
-        let soil = maps.SeedToSoil.Map seed
-        let fertiliser = maps.SoilToFertiliser.Map soil
-        let water = maps.FertiliserToWater.Map fertiliser
-        let light = maps.WaterToLight.Map water
-        let temp = maps.LightToTemperature.Map light
-        let humidity = maps.TemperatureToHumidity.Map temp
-        let location = maps.HumidityToLocation.Map humidity
-
-        location
 
     printfn ""
     let result = seeds
@@ -136,7 +147,7 @@ let main(args) =
                 |> Seq.mapi (fun idx s ->
                         printfn $"{DateTime.Now.TimeOfDay} Starting seed #{idx} (start={s.Seed}, Range={s.Range})"
                         seq { s.Seed..(s.Seed + s.Range - 1L) }
-                            |> Seq.map (fun seed -> getLocationForSeed seed)
+                            |> Seq.map (fun seed -> seed |> getLocationForSeed maps)
                     )
                 |> Seq.concat
                 |> Seq.min
