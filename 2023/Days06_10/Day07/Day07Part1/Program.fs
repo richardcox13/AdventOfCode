@@ -53,15 +53,28 @@ let main(args) =
     printfn $"Input file {filename}"
     let sw = System.Diagnostics.Stopwatch.StartNew ()
 
-    let cards = readFile filename |> Seq.map makeCard
-    for c in cards do
-        printfn "%A" c
+    let cards =
+        readFile filename
+        |> Seq.map makeCard
+        |> Seq.sortWith (fun a b ->
+                            let c = compare a.Type b.Type
+                            if c <> 0 then
+                                c
+                            else
+                                compare a.CardValues b.CardValues
+                        )
+        |> Seq.toArray
+    //for c in cards do
+    //    printfn "%A" c
 
-    let result = -1
+    let score =
+        cards
+        |> Seq.mapi (fun idx card -> (idx+1) * card.Bid)
+        |> Seq.sum
 
     sw.Stop()
     printfn ""
-    printfn $"Result = {result}"
+    printfn $"Result = {score}"
     printfn ""
     let ts = sw.Elapsed.ToString("h':'mm':'ss'.'FFF")
     printfn $"Completed in +{ts}"
