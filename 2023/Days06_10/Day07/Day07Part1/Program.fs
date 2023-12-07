@@ -26,7 +26,7 @@ let makeCard (hand: string, bid) =
         | 'J' -> 11y
         | 'T' -> 10y
         | c when c >= '2' && c <= '9'
-            -> (sbyte c) - (sbyte '0') + 1y
+            -> (sbyte c) - (sbyte '0')
         | _ as c -> failwith $"Unknown card '{c}'"
 
     let handType (h:string) =
@@ -63,18 +63,18 @@ let main(args) =
                             else
                                 compare a.CardValues b.CardValues
                         )
+        |> Seq.mapi (fun idx card -> card, idx, (idx+1) * card.Bid)
         |> Seq.toArray
-    for c in cards do
-        printfn "%A" c
+    for (c, idx, value) in cards do
+        printfn $"#{idx} {{ Cards=\"{c.Cards}\"; Type={c.Type}; CVs=%A{c.CardValues} Bid={c.Bid}  ({value:``#,#``})}}"
 
     let score =
         cards
-        |> Seq.mapi (fun idx card -> (idx+1) * card.Bid)
-        |> Seq.sum
+        |> Seq.sumBy (fun (_, _, v) -> v)
 
     sw.Stop()
     printfn ""
-    printfn $"Result = {score}"
+    printfn $"Result = {score:``#,#``}"
     printfn ""
     let ts = sw.Elapsed.ToString("h':'mm':'ss'.'FFF")
     printfn $"Completed in +{ts}"
