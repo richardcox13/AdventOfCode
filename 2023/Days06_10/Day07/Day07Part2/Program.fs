@@ -30,18 +30,32 @@ let makeCard (hand: string, bid) =
         | _ as c -> failwith $"Unknown card '{c}'"
 
     let handType (h:string) =
-        let grps = h |> Seq.groupBy (fun c -> c)
-                            |> Seq.map (fun (_, cs) -> cs |> Seq.length)
-                            |> Seq.sortDescending
-                            |> Seq.toList
-        match grps with
-        | [ 5 ] -> 7          // 5 of a kind
-        | [ 4; 1 ] -> 6       // 4 of a kind
-        | [ 3; 2 ] -> 5       // full house
-        | [ 3; 1; 1 ] -> 4    // 3 of a kind
-        | [ 2; 2; _] -> 3     // Two pairs
-        | [ 2; 1; 1; 1 ] -> 2 // A pair
-        | _ -> 1              // High card
+        // Extract any jokers and count them... will add the count
+        // to count of the most common other card (this will fail for "JJJJJ"
+        // which is in the main data
+        if h = "JJJJJ" then
+            7 // 5 of a kind
+        else
+            let withoutJokers = h.Replace("J", "")
+            let jokerCount = h.Length - withoutJokers.Length
+            let grps =
+                withoutJokers
+                    |> Seq.groupBy (fun c -> c)
+                    |> Seq.map (fun (_, cs) -> cs |> Seq.length)
+                    |> Seq.sortDescending
+                    |> Seq.toList
+            let adjGrps = match grps with
+                              | f::r -> (f+jokerCount) :: r
+                              | _ -> failwith $"should not be reachable (input = \"{h}\""
+
+            match adjGrps with
+            | [ 5 ] -> 7          // 5 of a kind
+            | [ 4; 1 ] -> 6       // 4 of a kind
+            | [ 3; 2 ] -> 5       // full house
+            | [ 3; 1; 1 ] -> 4    // 3 of a kind
+            | [ 2; 2; _] -> 3     // Two pairs
+            | [ 2; 1; 1; 1 ] -> 2 // A pair
+            | _ -> 1              // High card
 
     let cardVals = hand |> Seq.map (fun c -> cardScore c) |> Seq.toArray
     { Cards = hand; CardValues = cardVals; Type = handType hand; Bid = bid }
