@@ -29,7 +29,7 @@ Debug run, with `DEBUG` defined (so `assert` is executed):
 
 ### Create solution
 
-    dotnet new sln -o name
+    dotnet new sln -o <name>
 
 will create
 
@@ -39,7 +39,7 @@ will create
 
 ### Create project
 
-    dotnet new console -lang "f#" name
+    dotnet new console -lang "f#" <name>
 
 will create
 
@@ -48,6 +48,8 @@ will create
 
 and add to the solution (current folder must be that of the solution file, or need to specify the solution file):
 
-    dotnet sln add path=to=fsproj
+    dotnet sln add <path-to-fsproj>
 
-If there are any folders, beyond the one containing the project file, they are added to the solution as solution folders.
+If there are any folders, beyond the one containing the project file, they are added to the solution as solution folders, alternately:
+
+    dotnet sln <sln-file> add <path-to-fsproj>
