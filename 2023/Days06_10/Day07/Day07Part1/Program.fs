@@ -25,7 +25,7 @@ let makeCard (hand: string, bid) =
         | 'Q' -> 12y
         | 'J' -> 11y
         | 'T' -> 10y
-        | c when c >= '1' && c <= '9'
+        | c when c >= '2' && c <= '9'
             -> (sbyte c) - (sbyte '0') + 1y
         | _ as c -> failwith $"Unknown card '{c}'"
 
@@ -64,8 +64,8 @@ let main(args) =
                                 compare a.CardValues b.CardValues
                         )
         |> Seq.toArray
-    //for c in cards do
-    //    printfn "%A" c
+    for c in cards do
+        printfn "%A" c
 
     let score =
         cards
