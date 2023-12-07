@@ -1,13 +1,23 @@
 ﻿open System
 
+
+
+let readFile filename =
+    let reader = System.IO.File.ReadLines(filename)
+    reader |> Seq.map (fun l ->
+                  let x = l.Split(' ') |> Array.map _.Trim()
+                  x[0], Int32.Parse(x[1])
+              )
+
 [<EntryPoint>]
 let main(args) =
     printfn $"Working folder: {Environment.CurrentDirectory}"
     let filename = args[0]
-    printfn $"Reading from {filename}"
-
+    printfn $"Input file {filename}"
     let sw = System.Diagnostics.Stopwatch.StartNew ()
 
+    let data = readFile filename
+    printfn "%s" (data |> Seq.map (fun (h,b) -> $"({h},{b})") |> String.concat ", ")
 
     let result = -1
 
