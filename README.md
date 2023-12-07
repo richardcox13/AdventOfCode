@@ -4,12 +4,11 @@ See https://adventofcode.com/2022
 
 One folder per day.
 
-# Advent iof Code 2023
+# Advent of Code 2023
 
 See https://adventofcode.com/2023
 
-Five days per folder, with one solution (but not all days/parts use
-F# projects, but rather FSI).
+Five days per folder, with one solution (but not all days/parts use F# projects, but rather FSI).
 
 
 # Helpful Information
@@ -39,7 +38,7 @@ will create
 
 ### Create project
 
-    dotnet new console -lang "f#" <name>
+    dotnet new console -lang "f#" -o <name>
 
 will create
 
