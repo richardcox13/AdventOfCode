@@ -5,7 +5,7 @@ let makeMap (input: string seq) =
     let data
         = input
           |> Seq.map (fun l ->
-                                let ms = Regex.Match(l, @"(?<loc>\p{Lu}{3}) = \((?<left>\p{Lu}{3}), (?<right>\p{Lu}{3})\)")
+                                let ms = Regex.Match(l, @"(?<loc>[A-Z0-9]{3}) = \((?<left>[A-Z0-9]{3}), (?<right>[A-Z0-9]{3})\)")
                                 assert ms.Success
                                 assert (ms.Groups.Count = 4)
                                 ms.Groups["loc"].Value, (ms.Groups["left"].Value, ms.Groups["right"].Value)
@@ -48,22 +48,32 @@ let main(args) =
     let map = makeMap (inputText |> Seq.skip 2)
     let directions = directionsReader directionsInput
 
+    let startingPoints
+        = map.Keys
+          |> Seq.where (fun k -> k.EndsWith("A"))
+          |> Seq.toArray
+    printfn $"Starting at {startingPoints}"
     let path
         = directions
-          |> Seq.scan (fun position dir ->
-                                let opts = map[position]
-                                match dir with
-                                | 'L' -> fst opts
-                                | 'R' -> snd opts
-                                | _ -> failwith $"Unexpected directtion '{dir}'"
-                             ) "AAA"
-           |> takeWHileInclusive (fun pos -> pos <> "ZZZ")
+          |> Seq.scan (fun positions dir ->
+                                positions
+                                    |> Seq.map (fun pos ->
+                                        let opts = map[pos]
+                                        match dir with
+                                        | 'L' -> fst opts
+                                        | 'R' -> snd opts
+                                        | _ -> failwith $"Unexpected directtion '{dir}'"
+                                    )
+                                    |> Seq.toArray
+                             ) startingPoints
            |> Seq.mapi (fun idx pos -> (idx, pos))
+           |> Seq.map (fun (idx, positions) ->
+                                    printfn $"#{idx}: %A{positions}"
+                                    (idx, positions)
+                              )
+           |> takeWHileInclusive (fun (_,positions) -> not (positions |> Seq.forall (fun p -> p.EndsWith("Z"))))
            |> Seq.toArray
     
-    for (i, p) in path do
-        printfn $"#{i}: {p}"
-
     let count = fst (path |> Array.last)
 
     printfn $"Count = {count:``#,#``} ({count})"
