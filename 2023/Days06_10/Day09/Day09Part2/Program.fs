@@ -38,7 +38,7 @@ let calcNextInBaseSequence (diffSet: int array array) =
 
     let rec recurse diffSetIndex prevNewValue =
         let sequence = diffSet[diffSetIndex]
-        let newNextValue = prevNewValue + (sequence |> Array.last)
+        let newNextValue = sequence[0] - prevNewValue
         if diffSetIndex = 0 then
             newNextValue
         else
