@@ -13,4 +13,8 @@
     <Compile Include="Program.fs" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\Shared\AoC.Common\AoC.Common.fsproj" />
+  </ItemGroup>
+
 </Project>
