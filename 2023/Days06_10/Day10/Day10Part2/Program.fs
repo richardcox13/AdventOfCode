@@ -18,6 +18,21 @@ type Cardinal =
     | South = 3
     | West = 4
 
+type PipelineStep = {
+    CurPos: Position
+    CurChar: char    
+    CurDir: Cardinal
+    Dist: int
+    NewPos: Position
+    NewChar: char
+    NewDir: Cardinal
+}
+
+type AnnotatedTile = {
+        Char: char
+        IsPipeline: bool
+    }
+
 let findStart (maze: string[]) =
     let srch
         = maze
@@ -116,19 +131,41 @@ let followPipe (maze: string[]) startPos =
         let mutable curPos = getPositionInDirecttion maze startPos firstDir
         let mutable curChar = maze[curPos.Row][curPos.Col]
         let mutable curDir = firstDir
+        yield { CurPos = startPos; CurChar = maze[startPos.Row][startPos.Col];  CurDir = firstDir;
+                Dist = 0;
+                NewPos = curPos; NewChar = curChar; NewDir = curDir }
         let mutable dist = 1
         while curChar <> 'S' do
             let newDir= getDirectionFromChar curDir curChar
             let newPos = getPositionInDirecttion maze curPos newDir
             let newChar = maze[newPos.Row][newPos.Col]
-            yield {| CurPos = curPos; CurChar = curChar;  CurDir = curDir;
-                     Dist = dist;
-                     NewPos = newPos; NewChar = newChar; NewDir = newDir |}
+            yield { CurPos = curPos; CurChar = curChar;  CurDir = curDir;
+                    Dist = dist;
+                    NewPos = newPos; NewChar = newChar; NewDir = newDir }
             dist <- dist+1
             curPos <- newPos
             curChar <- newChar
             curDir <- newDir
     }
+
+let buildmarkedMaze (maze: string[]) path =
+    let markedMaze
+        = Array.init maze.Length
+            (fun r ->
+                            Array.init maze[0].Length (fun c ->
+                                { Char = maze[r][c]; IsPipeline = false }
+                            )
+                       )
+
+    path |> Seq.iter (fun p ->
+                                let pos = p.CurPos;
+                                let c = p.CurChar
+                                markedMaze[pos.Row][pos.Col] <-  { Char = c; IsPipeline = true }
+                            )
+    markedMaze
+
+let countInternalTiles (maze: AnnotatedTile array array) =
+    0
 
 [<EntryPoint>]
 let main(args) =
@@ -144,19 +181,22 @@ let main(args) =
     let startPosition = findStart maze
     printfn $"Start = {startPosition}"
     
-    let path = followPipe maze startPosition
+    let pipePath
+        = followPipe maze startPosition
+          |> Seq.toArray
 
-    let resultDist
-        = path
+    let pipelineLength
+        = pipePath
           |> Seq.mapi (fun idx r ->
                                 printfn $"#{idx} current pos={r.CurPos} ('{r.CurChar}'), dir={r.CurDir}; dist={r.Dist} --> {r.NewPos} ('{r.NewChar}'), dir={r.NewDir}"
                                 r.Dist
-                             )
+                              )
           |> Seq.last
 
+    let markedMaze = buildmarkedMaze maze pipePath
+    let internalTileCount = countInternalTiles markedMaze
+
     printfn ""
-    printfn $"Final dist = {resultDist:``#,#``}"
-    let maxAway = int (ceil ((float resultDist) / 2.0))
-    printfn $"Final dist = {maxAway:``#,#``} ({maxAway})"
+    printfn $"Internal tile count = {internalTileCount:``#,0``} ({internalTileCount})"
     printfn ""
     0
