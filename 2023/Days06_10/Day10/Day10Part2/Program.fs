@@ -1,4 +1,5 @@
 ﻿open System
+open System.Text.RegularExpressions
 open AoC.Common
 
 [<CustomEquality>][<NoComparison>]
@@ -165,7 +166,24 @@ let buildmarkedMaze (maze: string[]) path =
     markedMaze
 
 let countInternalTiles (maze: AnnotatedTile array array) =
-    0
+    let tileIsInterior row col =
+        let slice
+            = maze[row][0..col]
+              |> Array.where (fun t -> t.IsPipeline)
+              |> Array.map (fun t -> t.Char)
+        let s = new String(slice)
+        if s.Length < 1 then
+            false
+        else
+            let ms = Regex.Matches(s, @"F-*J|L-*7|\|")
+            ms.Count % 2 = 1
+    let mutable count = 0
+    for row in seq { 1 .. (maze.Length-2) } do
+        for col in seq { 1 .. (maze[0].Length-2)} do
+            let t = maze[row][col]
+            if not (t.IsPipeline) && (tileIsInterior row col) then
+                count <- count+1
+    count
 
 [<EntryPoint>]
 let main(args) =
