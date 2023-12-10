@@ -13580,5 +13580,5 @@ First move will be North to (24, 77)
 
 Internal tile count = 513 (513)
 
-Completed in +0:00:00.635
+Completed in +0:00:00.683
 GC counts 0: 9; 1: 1; 2: 0; 

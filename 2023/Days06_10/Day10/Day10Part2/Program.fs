@@ -149,6 +149,19 @@ let followPipe (maze: string[]) startPos =
             curDir <- newDir
     }
 
+let charFromDirections d1 d2 =
+    assert (d1 <> d2)
+    // Save needing to match both ways around
+    let (a,b) = if (int d1) > (int d2) then (d2,d1) else (d1,d2)
+    match (a, b) with
+    | (Cardinal.North, Cardinal.South) -> '|'
+    | (Cardinal.East, Cardinal.West) -> '-'
+    | (Cardinal.North, Cardinal.East) -> 'L'
+    | (Cardinal.North, Cardinal.West) -> 'J'
+    | (Cardinal.East, Cardinal.South) -> 'F'
+    | (Cardinal.South, Cardinal.West) -> '7'
+    | _ -> failwith $"Unexpected direction combination ({a},{b})"
+
 let buildmarkedMaze (maze: string[]) path =
     let markedMaze
         = Array.init maze.Length
@@ -163,6 +176,9 @@ let buildmarkedMaze (maze: string[]) path =
                                 let c = p.CurChar
                                 markedMaze[pos.Row][pos.Col] <-  { Char = c; IsPipeline = true }
                             )
+    // Overwrite the 'S' with a char that matches its directions...
+    let pf = path |> Seq.head
+    markedMaze[pf.CurPos.Row][pf.CurPos.Col] <- { IsPipeline = true; Char = charFromDirections (pf.CurDir) ((path |> Array.last).CurDir) }
     markedMaze
 
 let countInternalTiles (maze: AnnotatedTile array array) =
