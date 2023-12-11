@@ -28,13 +28,13 @@ Debug run, with `DEBUG` defined (so `assert` is executed):
 
 ### Create solution
 
-    dotnet new sln -o <name>
+    dotnet new sln -o <folder>
 
 will create
 
     ./name/name.sln
 
-(folder can, of course, be renamed).
+(folder can, of course, be renamed). Also use `-n <sln-name>` to explicitly name the solution file, otherwise output (`-o`) folder name is used.
 
 ### Create project
 
