@@ -7,6 +7,15 @@ type OneInput = {
         Groups: int array
     }
 
+let countChar (char: char) (str: string) =
+    let rec inner (pos: int) count =
+        let idx = str.IndexOf(char, pos)
+        if idx = -1 then
+            count
+        else
+            inner (idx+1) (count+1)
+    inner 0 0
+
 let showSomeInputStats (input: string seq) =
     let sizes
         = input
@@ -108,18 +117,30 @@ let main(args) =
     //printfn $"substitute \"?.?#??\" with \"1234\": \"{r}\""
 
     // Quick check of valudation
-    let checkValidation groups map =
-        let groupToString grp = grp |> Seq.map (fun x -> $"{x}") |> String.concat ","
-        let res = validateReplacement groups map
-        printfn $"vaidate [| {groupToString groups} |] vs \"{map}\": {res}"
-    checkValidation ([| 1; 1 |]) ".#.#."
-    checkValidation ([| 1; 1 |]) ".##.."
-    checkValidation ([| 2 |]) ".##.."
-    checkValidation ([| 2;3;5 |]) "##.###....#####"
+    //let checkValidation groups map =
+    //    let groupToString grp = grp |> Seq.map (fun x -> $"{x}") |> String.concat ","
+    //    let res = validateReplacement groups map
+    //    printfn $"vaidate [| {groupToString groups} |] vs \"{map}\": {res}"
+    //checkValidation ([| 1; 1 |]) ".#.#."
+    //checkValidation ([| 1; 1 |]) ".##.."
+    //checkValidation ([| 2 |]) ".##.."
+    //checkValidation ([| 2;3;5 |]) "##.###....#####"
 
     let allInput = parseInput input
 
-    let result = -1
+    let result
+        = allInput
+          //|> Seq.skip 1 |> Seq.take 1 (* Testing, 2nd example is more interesting *)
+          |> Seq.map (fun inp ->
+                let subCount = countChar '?' inp.Map
+
+                getPeriodHashCombinations subCount
+                    |> Seq.map (fun sub -> applyReplacements inp.Map sub)
+                    |> Seq.where (fun sub -> validateReplacement inp.Groups sub)
+                    |> Seq.length
+            )
+          |> Seq.sum
+
     printfn ""
     printfn $"Result = {result:``#,0``} ({result})"
     printfn ""
