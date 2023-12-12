@@ -1,4 +1,5 @@
 ﻿open System
+open System.Text.RegularExpressions
 open AoC.Common
 
 
@@ -44,6 +45,14 @@ let getPeriodHashCombinations len  =
     else
         inner "" len
 
+let applyReplacements map (replacements: string) =
+    let mutable replaceIdx = -1
+    Regex.Replace(map, @"\?",
+                    fun _ -> 
+                                replaceIdx <- replaceIdx + 1
+                                string (replacements[replaceIdx])
+                 )
+
 [<EntryPoint>]
 let main(args) =
     printfn $"Working folder: {Environment.CurrentDirectory}"
@@ -68,6 +77,9 @@ let main(args) =
     printfn $"Length = 4: {js (getPeriodHashCombinations 4)}"
     printfn $"Length = 5: {js (getPeriodHashCombinations 5)}"
 
+    printfn ""
+    let r = applyReplacements "?.?#??" "1234"
+    printfn $"substitute \"?.?#??\" with \"1234\": \"{r}\""
 
     let result = -1
     printfn ""
