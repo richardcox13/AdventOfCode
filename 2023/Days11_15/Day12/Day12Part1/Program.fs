@@ -2,6 +2,10 @@
 open System.Text.RegularExpressions
 open AoC.Common
 
+type OneInput = {
+        Map: string
+        Groups: int array
+    }
 
 let showSomeInputStats (input: string seq) =
     let sizes
@@ -45,6 +49,18 @@ let getPeriodHashCombinations len  =
     else
         inner "" len
 
+let parseInput (input: string seq) =
+    input
+        |> Seq.map (fun line ->
+            let ss = line.Split(' ', StringSplitOptions.RemoveEmptyEntries)
+            assert (ss.Length = 2)
+            let (map, groupsStr) = (ss[0],ss[1])
+            let groups = groupsStr.Split(",") 
+                              |> Seq.map (fun n -> Int32.Parse(n.Trim()))
+                              |> Seq.toArray
+            { Map = map; Groups = groups }
+          )
+
 let applyReplacements map (replacements: string) =
     let mutable replaceIdx = -1
     Regex.Replace(map, @"\?",
@@ -52,6 +68,17 @@ let applyReplacements map (replacements: string) =
                                 replaceIdx <- replaceIdx + 1
                                 string (replacements[replaceIdx])
                  )
+
+let validateReplacement (groups: int array) target =
+    // Find all the matches of '#' ... needs to match in length
+    // and number of the groups in the input
+    let ms = Regex.Matches (target, @"#+")
+    if ms.Count <> groups.Length then
+        false
+    else
+        (ms, groups)
+            ||> Seq.zip
+            |> Seq.forall (fun (m, g) -> m.Value.Length = g)
 
 [<EntryPoint>]
 let main(args) =
@@ -67,19 +94,30 @@ let main(args) =
     showSomeInputStats input
 
     // Test combinations generation
+    //let js (a: string seq) =
+    //    a |> Seq.map (fun s -> $"\"{s}\"") |> String.concat ", "
+    //printfn $"Length = 1: {js (getPeriodHashCombinations 1)}"
+    //printfn $"Length = 2: {js (getPeriodHashCombinations 2)}"
+    //printfn $"Length = 3: {js (getPeriodHashCombinations 3)}"
+    //printfn $"Length = 4: {js (getPeriodHashCombinations 4)}"
+    //printfn $"Length = 5: {js (getPeriodHashCombinations 5)}"
 
-    let js (a: string seq) =
-        a |> Seq.map (fun s -> $"\"{s}\"") |> String.concat ", "
+    // Quick test of substitution
+    //printfn ""
+    //let r = applyReplacements "?.?#??" "1234"
+    //printfn $"substitute \"?.?#??\" with \"1234\": \"{r}\""
 
-    printfn $"Length = 1: {js (getPeriodHashCombinations 1)}"
-    printfn $"Length = 2: {js (getPeriodHashCombinations 2)}"
-    printfn $"Length = 3: {js (getPeriodHashCombinations 3)}"
-    printfn $"Length = 4: {js (getPeriodHashCombinations 4)}"
-    printfn $"Length = 5: {js (getPeriodHashCombinations 5)}"
+    // Quick check of valudation
+    let checkValidation groups map =
+        let groupToString grp = grp |> Seq.map (fun x -> $"{x}") |> String.concat ","
+        let res = validateReplacement groups map
+        printfn $"vaidate [| {groupToString groups} |] vs \"{map}\": {res}"
+    checkValidation ([| 1; 1 |]) ".#.#."
+    checkValidation ([| 1; 1 |]) ".##.."
+    checkValidation ([| 2 |]) ".##.."
+    checkValidation ([| 2;3;5 |]) "##.###....#####"
 
-    printfn ""
-    let r = applyReplacements "?.?#??" "1234"
-    printfn $"substitute \"?.?#??\" with \"1234\": \"{r}\""
+    let allInput = parseInput input
 
     let result = -1
     printfn ""
