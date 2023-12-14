@@ -23,7 +23,7 @@ let tiltGrid (grid: char[,]) =
     let tiltOneColumn col =
         let rec moveOneTile rowOfFirstSpace currentRow =
             if currentRow >= rowCount then
-                false
+                ()
             else
                 match (rowOfFirstSpace, grid[currentRow, col]) with
                 // Found rock before finding a space... keep looking
@@ -49,7 +49,6 @@ let tiltGrid (grid: char[,]) =
     let colCount = Array2D.length2 grid
     for c in 0 .. (colCount - 1) do
         tiltOneColumn c
-        //printGrid $"After column #{c}" "      " grid
 
 let calculateLoad (grid: char[,]) =
     let rowCount = Array2D.length1 grid
