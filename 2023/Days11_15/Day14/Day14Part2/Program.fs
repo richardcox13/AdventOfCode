@@ -22,11 +22,11 @@ let tiltGridEastOrWest (isEast: bool)  (grid: char[,]) =
     let colCount = Array2D.length2 grid
     let tiltOneRow row =
         let nextCol curCol =
-            if isEast then curCol+1 else curCol-1
+            if isEast then curCol-1 else curCol+1
 
         let rec moveTilesInRow colOfLastSpace currentCol =
-            if (isEast && currentCol >= colCount)
-                    || (not isEast && currentCol < 0) then
+            if (isEast && currentCol < 0)
+                    || (not isEast && currentCol >= colCount) then
                 ()
             else
                 match (colOfLastSpace, grid[row, currentCol]) with
@@ -45,7 +45,7 @@ let tiltGridEastOrWest (isEast: bool)  (grid: char[,]) =
                 | (x, y) ->
                     let d = if isEast then "east" else "west"
                     failwith $"Unexpected match for (%A{x}, %A{y}) while tilt is {d}"
-        moveTilesInRow None (if isEast then 0 else (colCount-1))
+        moveTilesInRow None (if isEast then (colCount-1) else 0)
 
     let rowCount = Array2D.length1 grid
     for r in 0 .. (rowCount-1) do
@@ -110,9 +110,20 @@ let calculateLoad (grid: char[,]) =
 
 let hashGrid (grid: char[,]) =
     // Initial value...
-    let hc = new HashCode ()
-    Array2D.iter (fun c -> hc.Add(c)) grid
-    hc.ToHashCode()
+    //let hc = new HashCode ()
+    //Array2D.iteri (fun row col c -> hc.Add(row * col * (int c))) grid
+    //hc.ToHashCode()
+    let maxRow = (Array2D.length1 grid) - 1
+    let maxCol = (Array2D.length2 grid) - 1
+    let rec inner row col (hasher: HashCode)=
+        if row > maxRow then
+            hasher.ToHashCode()
+        else if col > maxCol then
+            inner (row+1) 0 hasher
+        else
+            hasher.Add(grid[row, col])
+            inner row (col+1) hasher
+    inner 0 0 (new HashCode())
 
 [<EntryPoint>]
 let main(args) =
@@ -137,21 +148,22 @@ let main(args) =
     let grid = makeGrid input
     printGrid "Initial grid" "  " grid
 
-    tiltEast grid
-    printGrid "After tilt east" "  " grid
-    tiltWest grid
-    printGrid "After tilt west" "  " grid
-
     // (load, hash-of-grid)
-    //let mutable history: (int * int) list = []
-    //for c in 1..10 do
-    //    tiltNorth grid
-    //    tiltSouth grid
-    //    let load = calculateLoad grid
-    //    let hash = hashGrid grid
-    //    printfn $"Cycle #{c}: load = {load}, hash={hash}"
-    //    // Reminder: will be reverse order
-    //    history <- (load, hash) :: history
+    let mutable history: (int * int) list = []
+    for c in 1..15 do
+        tiltNorth grid
+        //printGrid $"Ater cycle #{c} North" "    " grid
+        tiltWest grid
+        //printGrid $"Ater cycle #{c} West" "    " grid
+        tiltSouth grid
+        //printGrid $"Ater cycle #{c} South" "    " grid
+        tiltEast grid
+        //printGrid $"Ater cycle #{c}" "  " grid
+        let load = calculateLoad grid
+        let hash = hashGrid grid
+        printfn $"Cycle #{c}: load = {load}, hash={hash}"
+        // Reminder: will be reverse order
+        history <- (load, hash) :: history
 
     let load = -1
 
