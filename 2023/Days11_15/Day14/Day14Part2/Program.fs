@@ -18,6 +18,39 @@ let printGrid title (prefix: string) (grid: char[,]) =
         Console.WriteLine()
     Console.WriteLine()
 
+let tiltGridEastOrWest (isEast: bool)  (grid: char[,]) =
+    let colCount = Array2D.length2 grid
+    let tiltOneRow row =
+        let nextCol curCol =
+            if isEast then curCol+1 else curCol-1
+
+        let rec moveTilesInRow colOfLastSpace currentCol =
+            if (isEast && currentCol >= colCount)
+                    || (not isEast && currentCol < 0) then
+                ()
+            else
+                match (colOfLastSpace, grid[row, currentCol]) with
+                | (None, '#')
+                | (None, 'O') -> moveTilesInRow None (nextCol currentCol)
+                | (None, '.') -> moveTilesInRow (Some currentCol) (nextCol currentCol)
+                | (Some spaceCol, '#')
+                              -> moveTilesInRow None (nextCol currentCol)
+                | (Some spaceCol, 'O')
+                              -> grid[row, spaceCol] <- 'O'
+                                 grid[row, currentCol] <- '.'
+                                 moveTilesInRow None (nextCol spaceCol)
+                | (Some spaceCol, '.')
+                             -> moveTilesInRow (Some spaceCol) (nextCol currentCol)
+
+                | (x, y) ->
+                    let d = if isEast then "east" else "west"
+                    failwith $"Unexpected match for (%A{x}, %A{y}) while tilt is {d}"
+        moveTilesInRow None (if isEast then 0 else (colCount-1))
+
+    let rowCount = Array2D.length1 grid
+    for r in 0 .. (rowCount-1) do
+        tiltOneRow r
+
 let tiltGridNorthOrSouth (isNorth: bool) (grid: char[,]) =
     let rowCount = Array2D.length1 grid
     let tiltOneColumn col =
@@ -57,8 +90,10 @@ let tiltGridNorthOrSouth (isNorth: bool) (grid: char[,]) =
     for c in 0 .. (colCount - 1) do
         tiltOneColumn c
 
+let tiltEast = tiltGridEastOrWest true
 let tiltNorth = tiltGridNorthOrSouth true
 let tiltSouth = tiltGridNorthOrSouth false
+let tiltWest = tiltGridEastOrWest false
 
 let calculateLoad (grid: char[,]) =
     let rowCount = Array2D.length1 grid
@@ -102,17 +137,21 @@ let main(args) =
     let grid = makeGrid input
     printGrid "Initial grid" "  " grid
 
-    // (load, hash-of-grid)
-    let mutable history: (int * int) list = []
+    tiltEast grid
+    printGrid "After tilt east" "  " grid
+    tiltWest grid
+    printGrid "After tilt west" "  " grid
 
-    for c in 1..10 do
-        tiltNorth grid
-        tiltSouth grid
-        let load = calculateLoad grid
-        let hash = hashGrid grid
-        printfn $"Cycle #{c}: load = {load}, hash={hash}"
-        // Reminder: will be reverse order
-        history <- (load, hash) :: history
+    // (load, hash-of-grid)
+    //let mutable history: (int * int) list = []
+    //for c in 1..10 do
+    //    tiltNorth grid
+    //    tiltSouth grid
+    //    let load = calculateLoad grid
+    //    let hash = hashGrid grid
+    //    printfn $"Cycle #{c}: load = {load}, hash={hash}"
+    //    // Reminder: will be reverse order
+    //    history <- (load, hash) :: history
 
     let load = -1
 
