@@ -59,6 +59,19 @@ let tiltGrid (grid: char[,]) =
         tiltOneColumn c
         //printGrid $"After column #{c}" "      " grid
 
+let calculateLoad (grid: char[,]) =
+    let rowCount = Array2D.length1 grid
+    let colCount =  Array2D.length2 grid
+    seq {
+        for r in 0 .. (rowCount-1) do
+            let rowWieght = rowCount - r
+            let rowCount
+                = seq { 0 .. (colCount-1) }
+                  |> Seq.where (fun c -> grid[r, c] = 'O')
+                  |> Seq.length
+            rowCount * rowWieght
+    } |> Seq.sum
+
 
 [<EntryPoint>]
 let main(args) =
@@ -81,15 +94,15 @@ let main(args) =
     use diag = Utility.GetTracker ()
 
     let grid = makeGrid input
-    printGrid "Initial grid" "  " grid
+    //printGrid "Initial grid" "  " grid
 
+    // NB. This makes changes in place...
     tiltGrid grid
 
-    printGrid "After tilt grid" "  " grid
+    //printGrid "After tilt grid" "  " grid
 
-
-    let result = -1
+    let load = calculateLoad grid
     printfn ""
-    printfn $"Result = {result:``#,0``} ({result})"
+    printfn $"Load after tile = {load:``#,0``} ({load})"
     printfn ""
     0
