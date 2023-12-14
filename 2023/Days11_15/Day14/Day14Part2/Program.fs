@@ -148,9 +148,10 @@ let main(args) =
     let grid = makeGrid input
     printGrid "Initial grid" "  " grid
 
-    // (load, hash-of-grid)
-    let mutable history: (int * int) list = []
-    for c in 1..15 do
+    // (cycle, load, hash-of-grid)
+    let mutable history: (int * int * int) list = []
+    let mutable foundCycle = false
+    for c in (seq {1..1_000_000} |> Seq.where (fun _ -> not foundCycle)) do
         tiltNorth grid
         //printGrid $"Ater cycle #{c} North" "    " grid
         tiltWest grid
@@ -162,12 +163,23 @@ let main(args) =
         let load = calculateLoad grid
         let hash = hashGrid grid
         printfn $"Cycle #{c}: load = {load}, hash={hash}"
+
+        if not foundCycle then
+            match (history |> List.tryFind (fun (c, ll, hh) -> ll = load && hh = hash)) with
+            | None -> ()
+            | Some (prevCycle, _, _)
+                   -> printfn $"  load & hash match cycle #{prevCycle}"
+                      let cycleStart = prevCycle
+                      let cycleLen = c - prevCycle
+                      printfn $"Cycle start after cycle {cycleStart}, with length {cycleLen}"
+                      let resCycle = (1_000_000_000 - cycleStart) % cycleLen + cycleStart
+                      printfn $"Cucle 1000000000 = {resCycle}"
+                      let (_, result, _) = history |> List.find (fun (cc, _, _) -> cc = resCycle)
+                      printfn $"Result load = {result:``#,0``} ({result})"
+                      foundCycle <- true
+                      ()
+
         // Reminder: will be reverse order
-        history <- (load, hash) :: history
+        history <- (c, load, hash) :: history
 
-    let load = -1
-
-    printfn ""
-    printfn $"Load after tile = {load:``#,0``} ({load})"
-    printfn ""
     0
