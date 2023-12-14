@@ -36,7 +36,8 @@ let tiltGrid (grid: char[,]) =
                 | (Some spaceRow, 'O') ->
                     grid[spaceRow, col] <- 'O'
                     grid[currentRow, col] <- '.'
-                    true
+                    // Continue looking for another move
+                    moveOneTile None (spaceRow+1)
                 // found a cubic (unmovabnle) rock, nothing before to move,
                 // but might be after, so start again
                 | (Some _, '#') -> moveOneTile None (currentRow+1)
@@ -48,7 +49,9 @@ let tiltGrid (grid: char[,]) =
             let m1 = moveOneTile None 0
             //printGrid $"After {iterationCount+1} iterations of applyMoveOneTile fpr column #{col}" "      " grid
             match m1 with
-            | true -> applyMoveOneTile (iterationCount+1)
+            | true ->
+                assert false
+                applyMoveOneTile (iterationCount+1)
             // We're done
             | false -> ()
 
