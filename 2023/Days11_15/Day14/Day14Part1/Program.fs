@@ -45,17 +45,7 @@ let tiltGrid (grid: char[,]) =
                 | (Some spaceRow, '.') -> moveOneTile (Some spaceRow) (currentRow+1)
                 | (x, y) -> failwith $"Unexpected match for (%A{x}, %A{y})"
 
-        let rec applyMoveOneTile iterationCount =
-            let m1 = moveOneTile None 0
-            //printGrid $"After {iterationCount+1} iterations of applyMoveOneTile fpr column #{col}" "      " grid
-            match m1 with
-            | true ->
-                assert false
-                applyMoveOneTile (iterationCount+1)
-            // We're done
-            | false -> ()
-
-        applyMoveOneTile 0
+        moveOneTile None 0
 
     let colCount = Array2D.length2 grid
     for c in 0 .. (colCount - 1) do
