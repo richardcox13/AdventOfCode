@@ -98,7 +98,15 @@ let main(args) =
 
     printBoxes "After running instructions" boxes
 
-    let result = -1
+    let result
+        = boxes
+          |> Seq.mapi (fun boxIdx box -> 
+                                    box |> Seq.mapi (fun lensIdx l ->
+                                        (boxIdx+1) * (lensIdx+1) * l.Focus
+                                )
+                              )
+          |> Seq.concat
+          |> Seq.sum
     printfn ""
     printfn $"Result = {result:``#,0``} ({result})"
     printfn ""
