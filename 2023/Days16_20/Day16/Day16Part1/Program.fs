@@ -211,17 +211,43 @@ let main(args) =
 
     let input = System.IO.File.ReadAllLines(filename)
 
-    let startPos = { Row = 0s; Col = 0s }
-    let startDirection = Direction.Right
+    let rc = int16 (input.Length)
+    let cc = int16 (input[0].Length)
+    let (dir, start, count)
+        = seq {
+            // start from each point down into top row, and
+            // up into bottom row
+            for c in 0s .. (cc-1s) do
+                let p = { Row = 0s; Col = c }
+                let g = buildGrid input
+                applyBeams g p Direction.Down
+                let eng = countEnergisedCells g
+                yield (Direction.Down, p, eng)
 
-    let grid = buildGrid input
-    applyBeams grid startPos startDirection
-    let energisedCount = countEnergisedCells grid
+                let p = { Row = (rc-1s); Col = c }
+                let g = buildGrid input
+                applyBeams g p Direction.Up
+                let eng = countEnergisedCells g
+                yield (Direction.Up, p, eng)
 
-    //printEnergisedGrid "Energised cells" grid
+            // And now for the left and right sides
+            for r in 0s .. (cc-1s) do
+                let p = { Row = r; Col = 0s }
+                let g = buildGrid input
+                applyBeams g p Direction.Right
+                let eng = countEnergisedCells g
+                yield (Direction.Right, p, eng)
 
-    let result = energisedCount
+                let p = { Row = r; Col = (rc-1s) }
+                let g = buildGrid input
+                applyBeams g p Direction.Left
+                let eng = countEnergisedCells g
+                yield (Direction.Left, p, eng)
+          }
+          |> Seq.maxBy (fun (_,_,c) -> c)
+
     printfn ""
-    printfn $"Result = {result:``#,0``} ({result})"
+    printfn $"Result = {count:``#,0``} ({count})"
+    printfn $"Starting {start} going {dir}"
     printfn ""
     0
