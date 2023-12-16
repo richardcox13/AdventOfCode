@@ -80,6 +80,20 @@ let moveDir pos dir =
             | _  -> failwith $"Unexpected direction {dir}"
     f pos
 
+let countEnergisedCells (grid: Grid) =
+    let rc = rowCount grid
+    let cc = colCount grid
+
+    seq {
+        for r in 0 .. (rc-1) do
+            for c in  0 .. (cc-1) do
+                { Row = r; Col = c }
+    }
+    |> Seq.map (fun p -> getCell p grid)
+    |> Seq.where (fun c -> c.HasUpwardsBeam || c.HasDownwardsBeam || c.HasLeftwardsBeam || c.HasRightwardsBeam)
+    |> Seq.length
+            
+
 let applyBeams (grid: Grid) =
     let diag (msg: string) =
         Console.Write(msg)
@@ -159,7 +173,6 @@ let applyBeams (grid: Grid) =
                 | (x,y) -> failwith $"Can't handle direction {x} into symbol '{y}'"
                 ()
 
-
     let startPos = { Row = 0; Col = 0 }
     let startDirection = Direction.Right
     iterate startPos startDirection 1
@@ -180,7 +193,7 @@ let main(args) =
 
     applyBeams grid
 
-    let result = -1
+    let result = countEnergisedCells grid
     printfn ""
     printfn $"Result = {result:``#,0``} ({result})"
     printfn ""
