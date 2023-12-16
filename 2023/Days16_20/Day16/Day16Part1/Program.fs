@@ -112,10 +112,10 @@ let countEnergisedCells (grid: Grid) =
 
 let applyBeams (grid: Grid) =
     let diag (msg: string) =
-        Console.Write(msg)
+        //Console.Write(msg)
         ()
     let diagn(msg: string) =
-        Console.WriteLine(msg)
+        //Console.WriteLine(msg)
         () 
     let isInGrid pos =
         pos.Row >= 0s
@@ -214,11 +214,11 @@ let main(args) =
     use diag = Utility.GetTracker ()
 
     let grid = buildGrid filename
-    printGrid "Start" grid
+    //printGrid "Start" grid
 
     applyBeams grid
 
-    printEnergisedGrid "Energised cells" grid
+    //printEnergisedGrid "Energised cells" grid
 
     let result = countEnergisedCells grid
     printfn ""
