@@ -5,14 +5,15 @@ open AoC.Common
 
 
 type Direction =
-    | Up = 1
-    | Left = 2
-    | Down = 3
-    | Right = 4
+    | Up = 1uy
+    | Left = 2uy
+    | Down = 3uy
+    | Right = 4uy
 
+[<Struct>]
 type Position =
-    { Row: int
-      Col: int }
+    { Row: int16
+      Col: int16 }
     override x.ToString() = $"({x.Row}, {x.Col})"
 
 type GridCell = {
@@ -39,7 +40,7 @@ let buildGrid (filename: string) =
         (fun r c -> makeGridCell (input[r][c]))
 
 let getCell (pos: Position) (grid: Grid) =
-    grid[pos.Row, pos.Col]
+    grid[int pos.Row, int pos.Col]
 
 let getCellSymbol pos grid = (getCell pos grid).Symbol
 
@@ -51,17 +52,17 @@ let getCellDirectionFlag dir cell =
     | Direction.Right -> cell.HasRightwardsBeam
     | _  -> failwith $"Unexpected direction {dir}"
 
-let rowCount grid = Array2D.length1 grid
-let colCount grid = Array2D.length2 grid
+let rowCount grid = int16 (Array2D.length1 grid)
+let colCount grid = int16 (Array2D.length2 grid)
 
 let printGrid (title:string) (grid: Grid) =
     Console.Write(title)
     Console.WriteLine(':')
     let rc = rowCount grid
     let cc = colCount grid
-    for r in 0 .. (rc-1) do
+    for r in 0s .. (rc-1s) do
         Console.Write("    ")
-        for c in 0 .. (cc-1) do
+        for c in 0s .. (cc-1s) do
             Console.Write(getCellSymbol { Row = r; Col = c} grid)
         Console.WriteLine()
     Console.WriteLine()
@@ -71,9 +72,9 @@ let printEnergisedGrid (title:string) (grid: Grid) =
     Console.WriteLine(':')
     let rc = rowCount grid
     let cc = colCount grid
-    for r in 0 .. (rc-1) do
+    for r in 0s .. (rc-1s) do
         Console.Write("    ")
-        for c in 0 .. (cc-1) do
+        for c in 0s .. (cc-1s) do
             let c= getCell { Row = r; Col = c} grid
             let e = c.HasDownwardsBeam || c.HasLeftwardsBeam || c.HasRightwardsBeam || c.HasUpwardsBeam
             let s = if e then '#' else '.'
@@ -81,10 +82,10 @@ let printEnergisedGrid (title:string) (grid: Grid) =
         Console.WriteLine()
     Console.WriteLine()
 
-let moveLeft pos = { Row = pos.Row; Col = pos.Col - 1 }
-let moveRight pos = { Row = pos.Row; Col = pos.Col + 1 }
-let moveUp pos = { Row = pos.Row - 1; Col = pos.Col }
-let moveDown pos = { Row = pos.Row + 1; Col = pos.Col }
+let moveLeft pos = { Row = pos.Row; Col = pos.Col - 1s }
+let moveRight pos = { Row = pos.Row; Col = pos.Col + 1s }
+let moveUp pos = { Row = pos.Row - 1s; Col = pos.Col }
+let moveDown pos = { Row = pos.Row + 1s; Col = pos.Col }
 
 let moveDir pos dir =
     let f = match dir with
@@ -100,8 +101,8 @@ let countEnergisedCells (grid: Grid) =
     let cc = colCount grid
 
     seq {
-        for r in 0 .. (rc-1) do
-            for c in  0 .. (cc-1) do
+        for r in 0s .. (rc-1s) do
+            for c in  0s .. (cc-1s) do
                 { Row = r; Col = c }
     }
     |> Seq.map (fun p -> getCell p grid)
@@ -117,9 +118,9 @@ let applyBeams (grid: Grid) =
         Console.WriteLine(msg)
         () 
     let isInGrid pos =
-        pos.Row >= 0
+        pos.Row >= 0s
             && pos.Row < (rowCount grid)
-            && pos.Col >= 0
+            && pos.Col >= 0s
             && pos.Col < (colCount grid)
 
     let updateCellWithBeam pos dir =
@@ -173,12 +174,21 @@ let applyBeams (grid: Grid) =
                 | (Direction.Up, '/')
                         -> diagn ""
                            iterate (moveRight pos) Direction.Right (its+1)
+                | (Direction.Down, '/')
+                        -> diagn ""
+                           iterate (moveLeft pos) Direction.Left (its+1)
+                | (Direction.Left, '/')
+                        -> diagn ""
+                           iterate (moveDown pos) Direction.Down (its+1)
                 | (Direction.Right, '/')
                         -> diagn ""
                            iterate (moveUp pos) Direction.Up (its+1)
                 | (Direction.Up, '\\')
                         -> diagn ""
                            iterate (moveLeft pos) Direction.Left (its+1)
+                | (Direction.Down, '\\')
+                        -> diagn ""
+                           iterate (moveRight pos) Direction.Right (its+1)
                 | (Direction.Left, '\\')
                         -> diagn ""
                            iterate (moveUp pos) Direction.Up (its+1)
@@ -188,7 +198,7 @@ let applyBeams (grid: Grid) =
                 | (x,y) -> failwith $"Can't handle direction {x} into symbol '{y}'"
                 ()
 
-    let startPos = { Row = 0; Col = 0 }
+    let startPos = { Row = 0s; Col = 0s }
     let startDirection = Direction.Right
     iterate startPos startDirection 1
     ()
