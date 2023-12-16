@@ -34,8 +34,7 @@ let makeGridCell symbol
         HasDownwardsBeam = false
         HasRightwardsBeam = false }
 
-let buildGrid (filename: string) =
-    let input = System.IO.File.ReadAllLines(filename)
+let buildGrid (input: string array) =
     Array2D.init input.Length input[0].Length
         (fun r c -> makeGridCell (input[r][c]))
 
@@ -108,9 +107,8 @@ let countEnergisedCells (grid: Grid) =
     |> Seq.map (fun p -> getCell p grid)
     |> Seq.where (fun c -> c.HasUpwardsBeam || c.HasDownwardsBeam || c.HasLeftwardsBeam || c.HasRightwardsBeam)
     |> Seq.length
-            
 
-let applyBeams (grid: Grid) =
+let applyBeams (grid: Grid) startPos startDirection =
     let diag (msg: string) =
         //Console.Write(msg)
         ()
@@ -198,8 +196,6 @@ let applyBeams (grid: Grid) =
                 | (x,y) -> failwith $"Can't handle direction {x} into symbol '{y}'"
                 ()
 
-    let startPos = { Row = 0s; Col = 0s }
-    let startDirection = Direction.Right
     iterate startPos startDirection 1
     ()
 
@@ -213,14 +209,18 @@ let main(args) =
     printfn ""
     use diag = Utility.GetTracker ()
 
-    let grid = buildGrid filename
-    //printGrid "Start" grid
+    let input = System.IO.File.ReadAllLines(filename)
 
-    applyBeams grid
+    let startPos = { Row = 0s; Col = 0s }
+    let startDirection = Direction.Right
+
+    let grid = buildGrid input
+    applyBeams grid startPos startDirection
+    let energisedCount = countEnergisedCells grid
 
     //printEnergisedGrid "Energised cells" grid
 
-    let result = countEnergisedCells grid
+    let result = energisedCount
     printfn ""
     printfn $"Result = {result:``#,0``} ({result})"
     printfn ""
