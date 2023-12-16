@@ -71,11 +71,22 @@ let moveRight pos = { Row = pos.Row; Col = pos.Col + 1 }
 let moveUp pos = { Row = pos.Row - 1; Col = pos.Col }
 let moveDown pos = { Row = pos.Row + 1; Col = pos.Col }
 
+let moveDir pos dir =
+    let f = match dir with
+            | Direction.Up -> moveUp
+            | Direction.Down -> moveDown
+            | Direction.Left -> moveLeft
+            | Direction.Right -> moveRight
+            | _  -> failwith $"Unexpected direction {dir}"
+    f pos
+
 let applyBeams (grid: Grid) =
     let diag (msg: string) =
-        Console.WriteLine(msg)
+        Console.Write(msg)
         ()
-
+    let diagn(msg: string) =
+        Console.WriteLine(msg)
+        () 
     let isInGrid pos =
         pos.Row >= 0
             && pos.Row < (rowCount grid)
@@ -92,27 +103,66 @@ let applyBeams (grid: Grid) =
         | _  -> failwith $"Unexpected direction {dir}"
 
     // Pos is current cell, dir inbound direction
-    let rec iterate pos dir =
-        diag $"Iterate to {pos} coming {dir}"
+    let rec iterate pos dir its =
+        diag $"Iteration #{its}: to {pos} coming {dir}"
         if not (isInGrid pos) then
-            diag "  outside grid: end of beam"
+            diagn " outside grid: end of beam"
             ()
         else
             let cell = getCell pos grid
             if getCellDirectionFlag dir cell then
-                diag "  this cell has already been visited in this direction: end of beam"
+                diagn " this cell has already been visited in this direction: end of beam"
                 ()
             else
                 updateCellWithBeam pos dir
                 let sym = getCellSymbol pos grid
+                diag $" matching ({dir}, '{sym}')"
                 match (dir, sym) with
-                | (x,y) -> failwith $"Can't handle direction {x} into symbol {y}"
+                | (d, '.')
+                        -> diagn ""
+                           iterate (moveDir pos dir) dir (its+1)
+                | (Direction.Up, '|')
+                | (Direction.Down, '|')
+                        -> diagn ""
+                           iterate (moveDir pos dir) dir (its+1)
+                | (Direction.Right, '|')
+                | (Direction.Left, '|')
+                        -> diagn ""
+                           diagn "  vertical split"
+                           iterate (moveUp pos) Direction.Up (its+1)
+                           iterate (moveDown pos) Direction.Down (its+1)
+                | (Direction.Up, '-')
+                | (Direction.Down, '-')
+                        -> diagn ""
+                           diagn "  horizontal split"
+                           iterate (moveLeft pos) Direction.Left (its+1)
+                           iterate (moveRight pos) Direction.Right (its+1)
+                | (Direction.Left, '-')
+                | (Direction.Right, '-')
+                        -> diagn ""
+                           iterate (moveDir pos dir) dir (its+1)
+                | (Direction.Up, '/')
+                        -> diagn ""
+                           iterate (moveRight pos) Direction.Right (its+1)
+                | (Direction.Right, '/')
+                        -> diagn ""
+                           iterate (moveUp pos) Direction.Up (its+1)
+                | (Direction.Up, '\\')
+                        -> diagn ""
+                           iterate (moveLeft pos) Direction.Left (its+1)
+                | (Direction.Left, '\\')
+                        -> diagn ""
+                           iterate (moveUp pos) Direction.Up (its+1)
+                | (Direction.Right, '\\')
+                        -> diagn ""
+                           iterate (moveDown pos) Direction.Down (its+1)
+                | (x,y) -> failwith $"Can't handle direction {x} into symbol '{y}'"
                 ()
 
 
     let startPos = { Row = 0; Col = 0 }
-    let startDirection = Direction.Left
-    iterate startPos startDirection
+    let startDirection = Direction.Right
+    iterate startPos startDirection 1
     ()
 
 [<EntryPoint>]
