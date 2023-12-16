@@ -66,6 +66,21 @@ let printGrid (title:string) (grid: Grid) =
         Console.WriteLine()
     Console.WriteLine()
 
+let printEnergisedGrid (title:string) (grid: Grid) =
+    Console.Write(title)
+    Console.WriteLine(':')
+    let rc = rowCount grid
+    let cc = colCount grid
+    for r in 0 .. (rc-1) do
+        Console.Write("    ")
+        for c in 0 .. (cc-1) do
+            let c= getCell { Row = r; Col = c} grid
+            let e = c.HasDownwardsBeam || c.HasLeftwardsBeam || c.HasRightwardsBeam || c.HasUpwardsBeam
+            let s = if e then '#' else '.'
+            Console.Write(s)
+        Console.WriteLine()
+    Console.WriteLine()
+
 let moveLeft pos = { Row = pos.Row; Col = pos.Col - 1 }
 let moveRight pos = { Row = pos.Row; Col = pos.Col + 1 }
 let moveUp pos = { Row = pos.Row - 1; Col = pos.Col }
@@ -192,6 +207,8 @@ let main(args) =
     printGrid "Start" grid
 
     applyBeams grid
+
+    printEnergisedGrid "Energised cells" grid
 
     let result = countEnergisedCells grid
     printfn ""
