@@ -12,3 +12,5 @@ type Position =
         | :? Position as r when left.Row = r.Row && left.Col = r.Col
             -> true
         | _ -> false
+
+let identity x = x

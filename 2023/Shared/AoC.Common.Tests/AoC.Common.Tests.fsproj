@@ -10,6 +10,7 @@
 
   <ItemGroup>
     <Compile Include="Grid\CreattionTests.fs" />
+    <Compile Include="Grid\AggregateTests.fs" />
     <Compile Include="Grid\RowAndColTests.fs" />
     <Compile Include="Math\Math.Gcf.fs" />
     <Compile Include="Program.fs" />

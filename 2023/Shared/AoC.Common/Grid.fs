@@ -15,7 +15,21 @@ module Grid =
     let colCount (g: 't grid) =
         Array2D.length2 g
 
+    let maxCol (g: 't grid) =
+        (Array2D.length2 g) - 1
+
+    let maxRow (g: 't grid) =
+        (Array2D.length1 g) - 1
 
     let rowCount (g: 't grid) =
         Array2D.length1 g
 
+    let sumBy<'T> (project: 'T -> int) (g: 'T grid) =
+        seq {
+            let mr = maxRow g
+            let mc = maxCol g
+            for r in 0 .. mr do
+                for c in 0 .. mc do
+                    yield g[r,c] |> project
+        }
+        |> Seq.sum
