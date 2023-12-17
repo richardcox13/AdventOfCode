@@ -9,6 +9,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Include="Grid\CreattionTests.fs" />
     <Compile Include="Math\Math.Gcf.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
