@@ -8,6 +8,7 @@
   <ItemGroup>
     <Compile Include="Core.fs" />
     <Compile Include="Grid.fs" />
+    <Compile Include="Grid_Dijkstra.fs" />
     <Compile Include="Math.fs" />
     <Compile Include="Utility.fs" />
   </ItemGroup>
