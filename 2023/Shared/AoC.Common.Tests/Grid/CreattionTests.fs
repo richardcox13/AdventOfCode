@@ -23,7 +23,7 @@ let ``zero columns is a failure`` () =
 
 [<Fact>]
 let ``result has correct row count`` () =
-    let g: int Grid.Grid = Grid.create 16 5 13
+    let g: int grid = Grid.create 16 5 13
     Assert.Equal(16, Grid.rowCount g)
     ()
 

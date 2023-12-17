@@ -6,8 +6,6 @@ module Grid =
 
     open System
 
-
-
     let public create<'t> rows cols (value: 't) =
         ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(rows, 0)
         ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(cols, 0)
