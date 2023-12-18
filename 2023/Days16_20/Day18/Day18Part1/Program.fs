@@ -123,7 +123,7 @@ let main(args) =
     floodFill floodStart grid
     Grid.printf "With fill" "    " (fun b -> if b then "#" else ".") grid
 
-    let result = -1
+    let result = Grid.sumBy (fun b -> if b then 1 else 0) grid
     printfn ""
     printfn $"Result = {result:``#,0``} ({result})"
     printfn ""
