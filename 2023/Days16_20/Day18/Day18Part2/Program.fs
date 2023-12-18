@@ -20,10 +20,12 @@ let parseInputIntoPoints (input: string[]) =
                 let line = input[inpIdx]
                 let (dir, dist) = parseLine line
                 let newPos = match dir with
-                                | "D" -> { curPos with Row = curPos.Row + dist }
-                                | "U" -> { curPos with Row = curPos.Row - dist }
-                                | "R" -> { curPos with Col = curPos.Col + dist }
-                                | "L" -> { curPos with Col = curPos.Col - dist }
+                                // Lines are one thick, so make adjustment to enclose on
+                                // right and below
+                                | "D" -> { curPos with Row = curPos.Row + dist + 1 }
+                                | "U" -> { curPos with Row = curPos.Row - dist - 1 }
+                                | "R" -> { curPos with Col = curPos.Col + dist + 1 }
+                                | "L" -> { curPos with Col = curPos.Col - dist - 1 }
                                 | a -> failwith $"Unecpected input '{a} {dist}' at input index {inpIdx}"
                 yield newPos
                 yield! (inner (inpIdx+1) newPos)
@@ -56,7 +58,9 @@ let main(args) =
     use diag = Utility.GetTracker ()
     let filename = args[0]
     printfn $"Input file {filename}"
-    let input = File.ReadAllLines(filename)
+    //let input = File.ReadAllLines(filename)
+    let input = [| "R 3"; "D 3"; "L 3"; "U 3" |]
+    let input = [| "R 5"; "D 3"; "L 2"; "D 2"; "L 3"; "U 5" |]
     printfn ""
 
     let points
