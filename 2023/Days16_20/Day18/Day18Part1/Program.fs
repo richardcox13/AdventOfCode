@@ -86,6 +86,21 @@ let getOutline (inp: string seq) gridRows gridCols startPos =
     inner 0 startPos
     grid
 
+let floodFill (startPos: Position) (grid: bool grid) =
+    let rec inner p =
+        if (Grid.cell p grid) then
+            // Already filled
+            ()
+        else
+            grid[p.Row, p.Col] <- true
+            // Don't need range check as there will be a boundary first
+            inner { p with Row = p.Row - 1 }
+            inner { p with Row = p.Row + 1 }
+            inner { p with Col = p.Col - 1 }
+            inner { p with Col = p.Col + 1 }
+            ()
+
+    inner startPos
 
 [<EntryPoint>]
 let main(args) =
@@ -101,7 +116,12 @@ let main(args) =
     printfn $"The grid needs to be {gridRows} x {gridCols}, with a starting position {startPos}"
 
     let grid = getOutline input gridRows gridCols startPos
-    Grid.printf "With bnoundaries" "    " (fun b -> if b then "#" else ".") grid
+    Grid.printf "With boundaries" "    " (fun b -> if b then "#" else ".") grid
+    printfn ""
+
+    let floodStart = if filename.Contains("input") then { Row=1; Col=132 } else { Row=1; Col=1 }
+    floodFill floodStart grid
+    Grid.printf "With fill" "    " (fun b -> if b then "#" else ".") grid
 
     let result = -1
     printfn ""
