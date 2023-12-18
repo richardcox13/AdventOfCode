@@ -32,7 +32,21 @@ let parseInputIntoPoints (input: string[]) =
     // Input gives a closed loop, no need to yield the start
     // as it will appear at the end
     inner 0 { Row = 0; Col = 0 }
-    
+
+let shoelace (points: Position array) =
+    // Summations normally shown separately, but can avoid multiple loops
+    let n = points.Length // formulae use n...
+
+    let part1
+        =  seq { 0 .. (n-2) }
+           |> Seq.map (fun i -> points[i].Col * points[i+1].Row
+                                            - points[i+1].Col * points[i].Row)
+           |> Seq.sum
+
+    let crossTerms = points[n-1].Col * points[0].Row
+                            - points[0].Col * points[n-1].Row
+
+    (abs (part1 + crossTerms)) / 2
 
 [<EntryPoint>]
 let main(args) =
@@ -45,11 +59,14 @@ let main(args) =
     let input = File.ReadAllLines(filename)
     printfn ""
 
-    let points = parseInputIntoPoints input
+    let points
+        = parseInputIntoPoints input
+          |> Seq.toArray
+
     for (idx, p) in (points |> Seq.mapi (fun idx p -> (idx, p))) do
         printfn $"#{idx}: {p}"
 
-    let result = -1
+    let result = shoelace points
     printfn ""
     printfn $"Result = {result:``#,0``} ({result})"
     printfn ""
