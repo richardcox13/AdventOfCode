@@ -1,6 +1,6 @@
 ﻿namespace AoC.Common
 
-module Grid = 
+module Dijkstra =
 
     open System
     open AoC.Common.Core
@@ -25,7 +25,7 @@ module Grid =
                             Value = g[r,c]
                             Distance = infinity
                             Unvisited = true
-                       })
+                        })
 
     let dijkstra<'t> (getWieght: 't -> int) (start: Position) (grid: 't grid) =
         // 1. Intialised all as unvisted, and maximum distance
