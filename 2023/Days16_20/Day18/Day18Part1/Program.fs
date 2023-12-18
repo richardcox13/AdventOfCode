@@ -34,9 +34,13 @@ let findGridSize (inp: string seq) =
             inner (inputIdx+1) newPos newLimits
 
     let maxLimits = inner 0 { Row=0; Col=0 } { MinRow=0; MaxRow=0; MinCol=0; MaxCol=0 }
+    // as we started at (0,0) cnnot be +ve
+    assert (maxLimits.MinRow <= 0)
+    assert (maxLimits.MinCol <= 0)
+    let startPos = { Row = -1 * maxLimits.MinRow; Col = -1 * maxLimits.MinCol }
     let rows = maxLimits.MaxRow - maxLimits.MinRow + 1
     let cols = maxLimits.MaxCol - maxLimits.MinCol + 1
-    (rows, cols)
+    (rows, cols, startPos)
 
 [<EntryPoint>]
 let main(args) =
@@ -48,8 +52,8 @@ let main(args) =
     printfn $"Input file {filename}"
     let input = File.ReadLines(filename)
     printfn ""
-    let (gridRows, gridCols) = findGridSize input
-    printfn $"The grid needs to be {gridRows} x {gridCols}"
+    let (gridRows, gridCols, startPos) = findGridSize input
+    printfn $"The grid needs to be {gridRows} x {gridCols}, with a starting position {startPos}"
 
 
     let result = -1
