@@ -26,7 +26,7 @@ let findGridSize (inp: string seq) =
                              | "U" -> { curPos with Row = curPos.Row - dist }
                              | "R" -> { curPos with Col = curPos.Col + dist }
                              | "L" -> { curPos with Col = curPos.Col - dist }
-                             | a -> failwith $"Unecpected input '{a} {dist}' at input index {inputIdx}"
+                             | a -> failwith $"Findiung bounadaries: unecpected input '{a} {dist}' at input index {inputIdx}"
             let newLimits = { MinRow = min newPos.Row limits.MinRow;
                                         MaxRow = max newPos.Row limits.MaxRow;
                                         MinCol = min newPos.Col limits.MinCol;
@@ -42,6 +42,51 @@ let findGridSize (inp: string seq) =
     let cols = maxLimits.MaxCol - maxLimits.MinCol + 1
     (rows, cols, startPos)
 
+
+let getOutline (inp: string seq) gridRows gridCols startPos =
+    let input = inp |> Seq.toArray
+
+    let grid = Grid.create gridRows gridCols false
+
+    let fillHoizontal rowIdx cols = 
+        for c in cols do
+            grid[rowIdx,c] <- true
+
+    let fillVertical rows colIdx =
+        for r in rows do
+            grid[r,colIdx] <- true
+
+    let rec inner inputIdx curPos =
+        if inputIdx >= input.Length then
+            ()
+        else
+            let ss = input[inputIdx].Split(' ')
+            assert (ss.Length >= 2)
+            let dir = ss[0]
+            let dist = Int32.Parse(ss[1])
+            let nextPos = match dir with
+                             | "D" ->
+                                let (s, e) = curPos.Row, curPos.Row + dist
+                                fillVertical (seq {s .. e}) curPos.Col
+                                { curPos with Row = e}
+                             | "U" ->
+                                let (s, e) = curPos.Row - dist, curPos.Row
+                                fillVertical (seq {s .. e}) curPos.Col
+                                { curPos with Row = s}
+                             | "R" ->
+                                let (s, e) = curPos.Col, curPos.Col + dist
+                                fillHoizontal curPos.Row (seq {s .. e})
+                                { curPos with Col = e }
+                             | "L" ->
+                                let (s, e) = curPos.Col - dist, curPos.Col
+                                fillHoizontal curPos.Row (seq {s .. e})
+                                { curPos with Col = s }
+                             | a -> failwith $"Filling bounadaries: unecpected input '{a} {dist}' at input index {inputIdx}"
+            inner (inputIdx+1) nextPos
+    inner 0 startPos
+    grid
+
+
 [<EntryPoint>]
 let main(args) =
     printfn $"Working folder: {Environment.CurrentDirectory}"
@@ -55,6 +100,8 @@ let main(args) =
     let (gridRows, gridCols, startPos) = findGridSize input
     printfn $"The grid needs to be {gridRows} x {gridCols}, with a starting position {startPos}"
 
+    let grid = getOutline input gridRows gridCols startPos
+    Grid.printf "With bnoundaries" "    " (fun b -> if b then "#" else ".") grid
 
     let result = -1
     printfn ""

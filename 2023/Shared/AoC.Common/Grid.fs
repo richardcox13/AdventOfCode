@@ -28,6 +28,15 @@ module Grid =
     let maxRow (g: 't grid) =
         (Array2D.length1 g) - 1
 
+    let printf (title: string) (indent: string) (formatter: 't -> string) (g: 't grid)=
+        Console.Write(title)
+        Console.WriteLine(":")
+        for r in 0 .. (maxRow g) do
+            Console.Write(indent)
+            for c in 0 .. (maxCol g) do
+                Console.Write(formatter (g[r,c]))
+            Console.WriteLine()
+
     let rowCount (g: 't grid) =
         Array2D.length1 g
 
