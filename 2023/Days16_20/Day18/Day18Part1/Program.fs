@@ -1,4 +1,5 @@
 ﻿open System
+open System.Collections.Generic
 open System.IO
 open AoC.Common
 open AoC.Common.Core
@@ -87,20 +88,25 @@ let getOutline (inp: string seq) gridRows gridCols startPos =
     grid
 
 let floodFill (startPos: Position) (grid: bool grid) =
-    let rec inner p =
-        if (Grid.cell p grid) then
-            // Already filled
+    let stack = new Stack<Position>()
+    let rec inner () =
+        if stack.Count = 0 then
+            // Done
             ()
         else
-            grid[p.Row, p.Col] <- true
-            // Don't need range check as there will be a boundary first
-            inner { p with Row = p.Row - 1 }
-            inner { p with Row = p.Row + 1 }
-            inner { p with Col = p.Col - 1 }
-            inner { p with Col = p.Col + 1 }
-            ()
+            let p = stack.Pop ()
+            // Only expand is this is not already filled
+            if not (Grid.cell p grid) then
+                grid[p.Row, p.Col] <- true
+                // Don't need range check as there will be a boundary first
+                stack.Push({ p with Row = p.Row - 1 })
+                stack.Push({ p with Row = p.Row + 1 })
+                stack.Push({ p with Col = p.Col - 1 })
+                stack.Push({ p with Col = p.Col + 1 })
+            inner ()
 
-    inner startPos
+    stack.Push(startPos)
+    inner ()
 
 [<EntryPoint>]
 let main(args) =
@@ -119,7 +125,7 @@ let main(args) =
     Grid.printf "With boundaries" "    " (fun b -> if b then "#" else ".") grid
     printfn ""
 
-    let floodStart = if filename.Contains("input") then { Row=1; Col=132 } else { Row=1; Col=1 }
+    let floodStart = if filename.Contains("input") then { Row=3; Col=132 } else { Row=1; Col=1 }
     floodFill floodStart grid
     Grid.printf "With fill" "    " (fun b -> if b then "#" else ".") grid
 
