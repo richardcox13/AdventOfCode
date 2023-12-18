@@ -2,15 +2,33 @@
 open System.Collections.Generic
 open System.IO
 open AoC.Common
-open AoC.Common.Core
+//open AoC.Common.Core
+
+[<CustomEquality>][<NoComparison>]
+type Position =
+    { Row: int64; Col: int64 }
+    override x.ToString() = $"({x.Row}, {x.Col})"
+    override x.GetHashCode() = HashCode.Combine(x.Row, x.Col)
+    override left.Equals right =
+        match right with
+        | :? Position as r when left.Row = r.Row && left.Col = r.Col
+            -> true
+        | _ -> false
 
 // Part 1 pasring for easier debugging...
 // Return (direction, distance)
 let parseLine (line : string)=
     let ss = line.Split(' ')
-    assert (ss.Length >= 2)
-    let dir = ss[0]
-    let dist = Int32.Parse(ss[1])
+    assert (ss.Length >= 3)
+    let x = ss[2].TrimStart('(').TrimEnd(')')
+    assert (x[0] = '#')
+    let dir = match x[6] with
+                 | '0' -> "R"
+                 | '1' -> "D"
+                 | '2' -> "L"
+                 | '3' -> "U"
+                 | x -> failwith $"Unecpected direction '{x}' in input \"{line}\""
+    let dist = Int64.Parse(x[1..5], System.Globalization.NumberStyles.HexNumber)
     dir, dist
 
 // Returns (dir * dist) seq
@@ -18,7 +36,7 @@ let getInstructions (input: string seq) =
     input
       |> Seq.map (fun line-> parseLine line)
 
-let parseInputIntoPoints (instrctions: (string * int)[]) =
+let parseInputIntoPoints (instrctions: (string * int64)[]) =
     let rec inner instrIdx curPos =
         seq {
             if instrIdx < instrctions.Length then
@@ -52,7 +70,7 @@ let shoelace (points: Position array) =
     let crossTerms = points[n-1].Col * points[0].Row
                             - points[0].Col * points[n-1].Row
 
-    (abs (part1 + crossTerms)) / 2
+    (abs (part1 + crossTerms)) / 2L
 
 [<EntryPoint>]
 let main(args) =
@@ -82,7 +100,7 @@ let main(args) =
           |> Seq.map (fun (_, dist) -> dist)
           |> Seq.sum
 
-    let result = int ((float shoelaceArea) + (float boundaryArea)/2.0 + 1.0)
+    let result = int64 ((float shoelaceArea) + (float boundaryArea)/2.0 + 1.0)
     printfn ""
     printfn $"Result = {result:``#,0``} ({result})"
     printfn ""
