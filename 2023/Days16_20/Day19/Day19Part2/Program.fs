@@ -125,6 +125,51 @@ let getAllAcceptPaths (workflows: Map<string, Workflow>) =
       |> Seq.map (function | Some x -> x | _ -> failwith "oops")
       |> Seq.map (fun l -> l |> List.rev)
 
+// We depennd on this being a reference type
+// Min,Max is inclusive
+type AttrRange = { mutable Min: int; mutable Max: int} static member Create() = { Min = minAttribute; Max = maxAttribute }
+type PartRange = Map<string, AttrRange>
+
+let calcPartRangeFromRulePath (rules: Rule list) =
+    let applyRule rule (part: PartRange) =
+        match rule with
+        | Goto(_) -> failwith $"Goto found in rule list"
+        | LessThan(attr,value,_) ->
+            let a = part[attr]
+            a.Max <- value-1
+        | GreaterThan(attr,value,_) ->
+            let a = part[attr]
+            a.Min <- value+1
+
+    let getRange attr =
+        if attr.Min > attr.Max then
+            0L
+        else
+            int64 (attr.Max - attr.Min + 1)
+
+    let rec iterate rules (part: PartRange) =
+        match rules with
+        | [] ->
+            // Done... 
+            getRange (part["a"])
+                * getRange (part["m"])
+                * getRange (part["s"])
+                * getRange (part["x"])
+        | [r] ->
+            applyRule r part
+            iterate [] part
+        | r :: rest ->
+            applyRule r part
+            iterate rest part
+    
+    let p = Map [|
+        ("a", AttrRange.Create()); 
+        ("m", AttrRange.Create()); 
+        ("s", AttrRange.Create()); 
+        ("x", AttrRange.Create()); 
+    |]
+
+    iterate rules p
 
 [<EntryPoint>]
 let main(args) =
@@ -143,11 +188,18 @@ let main(args) =
     let workflows = Map (workflowArray |> Seq.map (fun w -> w.Name, w))
 
     let allPaths = getAllAcceptPaths workflows |> Seq.toArray
-    for (i,p) in (allPaths |> Array.indexed) do
-        printfn $"{i}: {pathToString p}"
-    printfn $"THere are {allPaths.Length} paths"
 
-    let result = -1
+    let result
+        = allPaths
+          |> Array.indexed
+          |> Seq.map (fun (i,p) ->
+                printf $"{i}: {pathToString p}: "
+                let x = calcPartRangeFromRulePath p
+                printfn $"{x}"
+                x
+            )
+          |> Seq.sum
+
     printfn ""
     printfn $"Result = {result:``#,0``} ({result})"
     printfn ""
