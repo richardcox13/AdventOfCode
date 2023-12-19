@@ -78,6 +78,50 @@ let parseInput (input: string[]) =
 
     (workflows |> Seq.toArray), (parts |> Seq.toArray)
 
+let processPart (workflows: Map<string, Workflow>) (part: Part) =
+    let getAttr attr =
+        match attr with
+        | "a" -> part.A
+        | "s" -> part.S
+        | "m" -> part.M
+        | "x" -> part.X
+        | x -> failwith $"Invalid attribute \"{x}\""
+
+    // return true for accepted and false for rejected
+    let rec runWorkflows wfName =
+        let rec runRules ruleIdx (rules: Rule[]) =
+            assert (ruleIdx < rules.Length)
+            let r = rules[ruleIdx]
+            match r with
+            | Goto(n) -> n
+            | GreaterThan(attr,value,name) ->
+                let a = getAttr attr
+                if a > value then
+                    name
+                else
+                    runRules (ruleIdx+1) rules
+            | LessThan(attr,value,name) ->
+                let a = getAttr attr
+                if a < value then
+                    name
+                else
+                    runRules (ruleIdx+1) rules
+
+        printf $"{wfName} -> "
+        let wf = workflows[wfName]
+        let next = runRules 0 wf.Rules
+        match next with
+         | "A" ->
+            let res = part.A + part.M + part.S + part.X
+            printfn $"accept ({res})"
+            res
+         | "R" ->
+            printfn "REJECT"
+            0
+         | x -> runWorkflows x
+
+    runWorkflows "in"
+
 [<EntryPoint>]
 let main(args) =
     printfn $"Working folder: {Environment.CurrentDirectory}"
@@ -93,10 +137,12 @@ let main(args) =
     printfn $"There are {workflowArray.Length} workflows, and {parts.Length} parts"
 
     let workflows = Map (workflowArray |> Seq.map (fun w -> w.Name, w))
-    let inW = workflows["in"]
-    printfn $"\"in\" rules = %A{inW.Rules}"
 
-    let result = -1
+
+    let result
+        = parts
+          |> Seq.map(fun p -> processPart workflows p)
+          |> Seq.sum
     printfn ""
     printfn $"Result = {result:``#,0``} ({result})"
     printfn ""
