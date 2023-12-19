@@ -52,8 +52,14 @@ let parseWorkflow (line: string) =
 
     { Name = name; Rules = rules }
 
+// Eg, "{x=2127,m=1623,a=2188,s=1013}"
 let parsePart (line: string) =
-    { A = -1; M = -1; S = -1; X = -1}
+    let m = Regex.Match(line, @"{x=(?<x>\d+),m=(?<m>\d+),a=(?<a>\d+),s=(?<s>\d+)")
+    assert (m.Success)
+
+    let g (n:string) = Int32.Parse(m.Groups[n].Value)
+
+    { A = g "a"; M = g "m"; S = g "s"; X = g "x" }
 
 // Returns (Workdlow[] * Part[])
 let parseInput (input: string[]) =
