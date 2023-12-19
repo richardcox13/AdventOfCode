@@ -13,11 +13,22 @@ type Rule =
         | Goto(name) -> $"Goto {name}"
         | GreaterThan(attr, value, name) -> $"if {attr}>{value} goto {name}"
         | LessThan(attr, value, name) -> $"if {attr}<{value} goto {name}"
+    member r.ToString(f: string) =
+        match (f, r) with
+        | ("s", Goto(name)) -> " -> " + name
+        | ("s", GreaterThan(attr,value,_)) ->
+            $"{attr}>{value}"
+        | ("s", LessThan(attr,value,_)) ->
+            $"{attr}<{value}"
+        | _ -> r.ToString()
 
 type Workflow = {
         Name: string
         Rules: Rule[]
     }
+
+let maxAttribute = 4000
+let minAttribute = 1
 
 // eg, "ex{x>10:one,m<20:two,a>30:R,A}"
 let parseWorkflow (line: string) =
@@ -59,6 +70,62 @@ let parseInput (input: string[]) =
 
     (workflows |> Seq.toArray)
 
+let pathToString (rules: Rule seq) =
+    rules |> Seq.map (fun r -> r.ToString("s")) |> String.concat ", "
+
+let getAllAcceptPaths (workflows: Map<string, Workflow>) =
+    let invertRule rule =
+        match rule with
+        | Goto(_) -> failwith "Cannot invert Goto rule"
+        | GreaterThan(attr, value, name) -> LessThan(attr, maxAttribute - value + 1, "x-" + name)
+        | LessThan(attr, value, name) -> GreaterThan(attr, value-1, "x-name")
+
+    let invertRules rules =
+        rules |> List.map (fun r -> invertRule r)
+
+    // return rule[0]
+    // NB. accymulator arg holds reverse order for efficiency
+    let rec followPaths curWorkflowName (acc: Rule list) =
+        seq {
+            let w = workflows[curWorkflowName]
+            for ruleIdx in 0 .. (w.Rules.Length-1) do
+                let r = w.Rules[ruleIdx]
+                match r with
+                | Goto(name) ->
+                    match name with
+                    | "A" ->
+                        yield (Some acc)
+                    | "R" ->
+                        yield None
+                    | _ ->
+                        assert (ruleIdx = w.Rules.Length-1)
+                        let rulesToAdd
+                            = invertRules (w.Rules[0 .. ruleIdx-1] |> List.ofArray)
+                              |> List.rev
+                        yield! (followPaths name (List.append rulesToAdd acc))
+                | GreaterThan(_,_,name)
+                | LessThan(_,_,name) ->
+                    let rulesToAdd
+                        = invertRules (w.Rules[0 .. ruleIdx-1] |> List.ofArray) 
+                          |> List.rev
+                    match name with
+                    | "A" ->
+                        let res = r :: (List.append rulesToAdd acc)
+                        yield (Some res)
+                    | "R" ->
+                        yield None
+                    | _ ->
+                        let res = r :: (List.append rulesToAdd acc)
+                        yield! (followPaths name res)
+        } |> Seq.where (fun x -> x.IsSome)
+
+    let start = "in"
+
+    followPaths start []
+      |> Seq.map (function | Some x -> x | _ -> failwith "oops")
+      |> Seq.map (fun l -> l |> List.rev)
+
+
 [<EntryPoint>]
 let main(args) =
     printfn $"Working folder: {Environment.CurrentDirectory}"
@@ -75,6 +142,10 @@ let main(args) =
 
     let workflows = Map (workflowArray |> Seq.map (fun w -> w.Name, w))
 
+    let allPaths = getAllAcceptPaths workflows |> Seq.toArray
+    for (i,p) in (allPaths |> Array.indexed) do
+        printfn $"{i}: {pathToString p}"
+    printfn $"THere are {allPaths.Length} paths"
 
     let result = -1
     printfn ""
