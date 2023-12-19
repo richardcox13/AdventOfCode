@@ -13,8 +13,13 @@ type Part = {
 
 type Rule =
     | Goto of name:string
-    | GreaterTHan of Attribute:string * Value:int * Next:string
-    | LessTHan of Attribute:string * Value:int * Next:string
+    | GreaterThan of Attribute:string * Value:int * Next:string
+    | LessThan of Attribute:string * Value:int * Next:string
+    override r.ToString() =
+        match r with
+        | Goto(name) -> $"Goto {name}"
+        | GreaterThan(attr, value, name) -> $"if {attr}>{value} goto {name}"
+        | LessThan(attr, value, name) -> $"if {attr}<{value} goto {name}"
 
 type Workflow = {
         Name: string
@@ -23,12 +28,29 @@ type Workflow = {
 
 // eg, "ex{x>10:one,m<20:two,a>30:R,A}"
 let parseWorkflow (line: string) =
-    let m = Regex.Match(line, @"(?<name>\p{Ll}+){(?<rules>.*)}")
+    let m = Regex.Match(line, @"(?<name>[ARa-z]+){(?<rules>.*)}")
     assert (m.Success)
     let name = m.Groups["name"].Value
-    let rules = m.Groups["rules"].Value
+    let ruleStr = m.Groups["rules"].Value
+    let rules
+        = ruleStr.Trim('{', '}').Split(',')
+          |> Seq.map (fun r ->
+                                let m = Regex.Match(r, @"(?:(?<attr>[amsx])(?<op>[<>])(?<val>\d+):)?((?<name>[ARa-z]+))")
+                                assert (m.Success)
+                                let n = m.Groups["name"].Value
+                                if m.Groups["attr"].Success then
+                                    let v = Int32.Parse(m.Groups["val"].Value)
+                                    let a = m.Groups["attr"].Value
+                                    if m.Groups["op"].Value = ">" then
+                                        GreaterThan(a, v, n)
+                                    else
+                                        LessThan(a, v, n)
+                                else
+                                    Goto(n)
+                            )
+          |> Seq.toArray
 
-    { Name = name; Rules = Array.empty<Rule> }
+    { Name = name; Rules = rules }
 
 let parsePart (line: string) =
     { A = -1; M = -1; S = -1; X = -1}
@@ -62,8 +84,11 @@ let main(args) =
     printfn ""
 
     let (workflowArray, parts) = parseInput input
-
     printfn $"There are {workflowArray.Length} workflows, and {parts.Length} parts"
+
+    let workflows = Map (workflowArray |> Seq.map (fun w -> w.Name, w))
+    let inW = workflows["in"]
+    printfn $"\"in\" rules = %A{inW.Rules}"
 
     let result = -1
     printfn ""
