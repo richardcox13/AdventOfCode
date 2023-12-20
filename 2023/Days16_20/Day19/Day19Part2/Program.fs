@@ -77,7 +77,7 @@ let getAllAcceptPaths (workflows: Map<string, Workflow>) =
     let invertRule rule =
         match rule with
         | Goto(_) -> failwith "Cannot invert Goto rule"
-        | GreaterThan(attr, value, name) -> LessThan(attr, maxAttribute - value + 1, "x-" + name)
+        | GreaterThan(attr, value, name) -> LessThan(attr, value+1, "x-" + name)
         | LessThan(attr, value, name) -> GreaterThan(attr, value-1, "x-name")
 
     let invertRules rules =
@@ -130,16 +130,30 @@ let getAllAcceptPaths (workflows: Map<string, Workflow>) =
 type AttrRange = { mutable Min: int; mutable Max: int} static member Create() = { Min = minAttribute; Max = maxAttribute }
 type PartRange = Map<string, AttrRange>
 
+let partRangeToString (part: PartRange) =
+    let s
+        = [| "a"; "m"; "s"; "x" |]
+          |> Seq.map (fun a ->
+                let t = part[a]
+                $"{a} in [{t.Min}, {t.Max}]"
+            )
+    "{" + (s |> String.concat "; ") + "}"
+
+let r2s (rule: Rule) = rule.ToString("s")
+
 let calcPartRangeFromRulePath (rules: Rule list) =
     let applyRule rule (part: PartRange) =
-        match rule with
-        | Goto(_) -> failwith $"Goto found in rule list"
-        | LessThan(attr,value,_) ->
-            let a = part[attr]
-            a.Max <- value-1
-        | GreaterThan(attr,value,_) ->
-            let a = part[attr]
-            a.Min <- value+1
+        printf "    Applying rule  %s " (r2s rule)
+        let res = match rule with
+                  | Goto(_) -> failwith $"Goto found in rule list"
+                  | LessThan(attr,value,_) ->
+                     let a = part[attr]
+                     a.Max <- value-1
+                  | GreaterThan(attr,value,_) ->
+                     let a = part[attr]
+                     a.Min <- value+1
+        printfn "gives %s" (partRangeToString part)
+        res
 
     let getRange attr =
         if attr.Min > attr.Max then
@@ -151,10 +165,12 @@ let calcPartRangeFromRulePath (rules: Rule list) =
         match rules with
         | [] ->
             // Done... 
-            getRange (part["a"])
-                * getRange (part["m"])
-                * getRange (part["s"])
-                * getRange (part["x"])
+            let aa = getRange (part["a"])
+            let mm = getRange (part["m"])
+            let ss = getRange (part["s"])
+            let xx = getRange (part["x"])
+            printfn $"    There are {aa} a's; {mm} m's; {ss} s's; & {xx} x's"
+            aa * mm * ss * xx
         | [r] ->
             applyRule r part
             iterate [] part
@@ -192,10 +208,11 @@ let main(args) =
     let result
         = allPaths
           |> Array.indexed
+          //|> Seq.take 1 (* ***** DEBUG ***** *)
           |> Seq.map (fun (i,p) ->
-                printf $"{i}: {pathToString p}: "
+                printfn $"{i}: {pathToString p}: "
                 let x = calcPartRangeFromRulePath p
-                printfn $"{x}"
+                printfn $"    {x:``#,0``} parts"
                 x
             )
           |> Seq.sum
