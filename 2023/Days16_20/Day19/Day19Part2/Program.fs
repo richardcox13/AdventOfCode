@@ -154,10 +154,22 @@ type PartRange =
                 )
         "{" + (s |> String.concat "; ") + "}"
 
+let getRange attr =
+    if attr.Min > attr.Max then
+        0L
+    else
+        int64 (attr.Max - attr.Min + 1)
+
 let r2s (rule: Rule) = rule.ToString("s")
 
 // workflowName * rule * parts
 type HistoryEntry = string * Rule * PartRange
+
+let invertRule rule =
+    match rule with
+    | Goto(_) -> failwith "Cannot invert Goto rule"
+    | GreaterThan(attr, value, name) -> LessThan(attr, value + 1, name)
+    | LessThan(attr, value, name) -> GreaterThan(attr, value-1, name)
 
 let followPathsForPartRanges (workflows: Map<string, Workflow>) =
     let applyRuleToParts rule parts =
@@ -181,19 +193,33 @@ let followPathsForPartRanges (workflows: Map<string, Workflow>) =
             ps,name
 
     let rec processRules wfName rules history parts =
-        // TODO handle the cases
-        let rule = rules |> List.head
-        let (newParts, nextWfName) = applyRuleToParts rule parts
-        let newHist = (wfName, rule, newParts) :: history
+        seq {
+            match rules with
+            | [] -> failwith "Should not reach here!"
+            | rule :: rest ->
+                match rule with
+                | Goto(name) ->
+                    assert ((rest |> List.length) = 0) // Goto is last in each workflow
+                    yield (name,history,parts)
+                | _ ->
+                    // Path where rule is matched, and thus move to next workflow
+                    let (parts1, nextWfName1) = applyRuleToParts rule parts
+                    let newHist1 = (wfName, rule, parts1) :: history
+                    yield (nextWfName1,newHist1,parts1)
 
-        Seq.singleton (nextWfName, newHist, newParts)
+                    // Path where the rule isn't matched
+                    let iRule = invertRule rule
+                    let (parts2, _) = applyRuleToParts iRule parts
+                    let newHist2 = (wfName, iRule, parts2) :: history
+                    yield! processRules wfName rest newHist2 parts2
+        }
 
     let rec processWorkflow wfName (history: HistoryEntry list) (parts: PartRange) =
         let wf = workflows[wfName]
         seq {
             for (nextWf, hist, ps) in (processRules wfName (wf.Rules |> List.ofArray) history parts) do
                 match nextWf with
-                | "A" -> Some (hist, parts)
+                | "A" -> Some (hist, ps)
                 | "R" -> None
                 | n ->
                     yield! (processWorkflow nextWf hist ps)
@@ -212,10 +238,7 @@ let main(args) =
     let input = File.ReadAllLines(filename)
     printfn ""
 
-    let workflowArray = parseInput input
-    printfn $"There are {workflowArray.Length} workflows"
-
-    let workflows = Map (workflowArray |> Seq.map (fun w -> w.Name, w))
+    let workflows = Map (parseInput input |> Seq.map (fun w -> w.Name, w))
 
     let printHist hist =
         let h = hist |> List.rev
@@ -230,31 +253,23 @@ let main(args) =
 
         inner h
 
-    let res
+    let result
         = followPathsForPartRanges workflows
           |> Seq.where (fun x -> x.IsSome)
           |> Seq.map (fun x -> x.Value)
-          |> Seq.map (fun (hist, parts) ->
+          |> Seq.mapi (fun idx (hist, parts) ->
+                printfn $"Path {idx}"
                 printHist hist
-                25L
+                let aa = getRange parts.A
+                let mm = getRange parts.M
+                let ss = getRange parts.S
+                let xx = getRange parts.X
+                let res = aa * mm * ss * xx
+                printfn $"  Result = {aa} * {mm} * {ss} * {xx} = {res}"
+                res
              )
           |> Seq.sum
 
-    (*let allPaths = getAllAcceptPaths workflows |> Seq.toArray*)
-
-    (*let result
-        = allPaths
-          |> Array.indexed
-          //|> Seq.take 1 //* ***** DEBUG ***** *
-          |> Seq.map (fun (i,p) ->
-                printfn $"{i}: {pathToString p}: "
-                let x = calcPartRangeFromRulePath p
-                printfn $"    {x:``#,0``} parts"
-                x
-            )
-          |> Seq.sum*)
-
-    let result = -1L
     printfn ""
     printfn $"Result = {result:``#,0``} ({result})"
     printfn ""
