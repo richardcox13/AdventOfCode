@@ -73,7 +73,7 @@ let parseInput (input: string[]) =
 let pathToString (rules: Rule seq) =
     rules |> Seq.map (fun r -> r.ToString("s")) |> String.concat ", "
 
-let getAllAcceptPaths (workflows: Map<string, Workflow>) =
+let XXgetAllAcceptPaths (workflows: Map<string, Workflow>) =
     let invertRule rule =
         match rule with
         | Goto(_) -> failwith "Cannot invert Goto rule"
@@ -127,65 +127,79 @@ let getAllAcceptPaths (workflows: Map<string, Workflow>) =
 
 // We depennd on this being a reference type
 // Min,Max is inclusive
-type AttrRange = { mutable Min: int; mutable Max: int} static member Create() = { Min = minAttribute; Max = maxAttribute }
-type PartRange = Map<string, AttrRange>
+type AttrRange = { Min: int; Max: int} static member Create() = { Min = minAttribute; Max = maxAttribute }
 
-let partRangeToString (part: PartRange) =
-    let s
-        = [| "a"; "m"; "s"; "x" |]
-          |> Seq.map (fun a ->
-                let t = part[a]
-                $"{a} in [{t.Min}, {t.Max}]"
-            )
-    "{" + (s |> String.concat "; ") + "}"
+type PartRange =
+    {
+        A: AttrRange
+        M: AttrRange
+        S: AttrRange
+        X: AttrRange
+    }
+    member x.GetAttr a =
+        match a with
+        | "a" -> x.A
+        | "m" -> x.M
+        | "s" -> x.S
+        | "x" -> x.X
+        | q -> failwith $"Invalid attribute '{q}'"
+    static member Create () =
+        { A = AttrRange.Create (); M = AttrRange.Create (); S = AttrRange.Create (); X = AttrRange.Create () }
+    override x.ToString() =
+        let s
+            = [| "a"; "m"; "s"; "x" |]
+              |> Seq.map (fun a ->
+                    let t = x.GetAttr(a)
+                    $"{a} in [{t.Min}, {t.Max}]"
+                )
+        "{" + (s |> String.concat "; ") + "}"
 
 let r2s (rule: Rule) = rule.ToString("s")
 
-let calcPartRangeFromRulePath (rules: Rule list) =
-    let applyRule rule (part: PartRange) =
-        printf "    Applying rule  %s " (r2s rule)
-        let res = match rule with
-                  | Goto(_) -> failwith $"Goto found in rule list"
-                  | LessThan(attr,value,_) ->
-                     let a = part[attr]
-                     a.Max <- value-1
-                  | GreaterThan(attr,value,_) ->
-                     let a = part[attr]
-                     a.Min <- value+1
-        printfn "gives %s" (partRangeToString part)
-        res
+// workflowName * rule * parts
+type HistoryEntry = string * Rule * PartRange
 
-    let getRange attr =
-        if attr.Min > attr.Max then
-            0L
-        else
-            int64 (attr.Max - attr.Min + 1)
+let followPathsForPartRanges (workflows: Map<string, Workflow>) =
+    let applyRuleToParts rule parts =
+        match rule with
+        | Goto(_) -> failwith $"Unexpected goto rule"
+        | GreaterThan(attr,value,name) ->
+            let ps = match attr with
+                      | "a" -> { parts with A = {parts.A with Min = max parts.A.Min (value + 1)}}
+                      | "m" -> { parts with M = {parts.M with Min = max parts.M.Min (value + 1)}}
+                      | "s" -> { parts with S = {parts.S with Min = max parts.S.Min (value + 1)}}
+                      | "x" -> { parts with X = {parts.X with Min = max parts.X.Min (value + 1)}}
+                      | a -> failwith $"Unexpected attr name '{a}'"
+            ps,name
+        | LessThan(attr,value,name) ->
+            let ps = match attr with
+                      | "a" -> { parts with A = {parts.A with Max = min parts.A.Max (value - 1)}}
+                      | "m" -> { parts with M = {parts.M with Max = min parts.M.Max (value - 1)}}
+                      | "s" -> { parts with S = {parts.S with Max = min parts.S.Max (value - 1)}}
+                      | "x" -> { parts with X = {parts.X with Max = min parts.X.Max (value - 1)}}
+                      | a -> failwith $"Unexpected attr name '{a}'"
+            ps,name
 
-    let rec iterate rules (part: PartRange) =
-        match rules with
-        | [] ->
-            // Done... 
-            let aa = getRange (part["a"])
-            let mm = getRange (part["m"])
-            let ss = getRange (part["s"])
-            let xx = getRange (part["x"])
-            printfn $"    There are {aa} a's; {mm} m's; {ss} s's; & {xx} x's"
-            aa * mm * ss * xx
-        | [r] ->
-            applyRule r part
-            iterate [] part
-        | r :: rest ->
-            applyRule r part
-            iterate rest part
-    
-    let p = Map [|
-        ("a", AttrRange.Create()); 
-        ("m", AttrRange.Create()); 
-        ("s", AttrRange.Create()); 
-        ("x", AttrRange.Create()); 
-    |]
+    let rec processRules wfName rules history parts =
+        // TODO handle the cases
+        let rule = rules |> List.head
+        let (newParts, nextWfName) = applyRuleToParts rule parts
+        let newHist = (wfName, rule, newParts) :: history
 
-    iterate rules p
+        Seq.singleton (nextWfName, newHist, newParts)
+
+    let rec processWorkflow wfName (history: HistoryEntry list) (parts: PartRange) =
+        let wf = workflows[wfName]
+        seq {
+            for (nextWf, hist, ps) in (processRules wfName (wf.Rules |> List.ofArray) history parts) do
+                match nextWf with
+                | "A" -> Some (hist, parts)
+                | "R" -> None
+                | n ->
+                    yield! (processWorkflow nextWf hist ps)
+        }
+
+    processWorkflow "in" [] (PartRange.Create())
 
 [<EntryPoint>]
 let main(args) =
@@ -203,20 +217,44 @@ let main(args) =
 
     let workflows = Map (workflowArray |> Seq.map (fun w -> w.Name, w))
 
-    let allPaths = getAllAcceptPaths workflows |> Seq.toArray
+    let printHist hist =
+        let h = hist |> List.rev
 
-    let result
+        let rec inner hh =
+            match hh with
+            | (wf: string, rule: Rule, ps: PartRange) :: rest ->
+                let rs = rule.ToString("s")
+                printfn $"  in \"{wf}\": {rs} gives {ps}"
+                inner rest
+            | [] -> ()
+
+        inner h
+
+    let res
+        = followPathsForPartRanges workflows
+          |> Seq.where (fun x -> x.IsSome)
+          |> Seq.map (fun x -> x.Value)
+          |> Seq.map (fun (hist, parts) ->
+                printHist hist
+                25L
+             )
+          |> Seq.sum
+
+    (*let allPaths = getAllAcceptPaths workflows |> Seq.toArray*)
+
+    (*let result
         = allPaths
           |> Array.indexed
-          //|> Seq.take 1 (* ***** DEBUG ***** *)
+          //|> Seq.take 1 //* ***** DEBUG ***** *
           |> Seq.map (fun (i,p) ->
                 printfn $"{i}: {pathToString p}: "
                 let x = calcPartRangeFromRulePath p
                 printfn $"    {x:``#,0``} parts"
                 x
             )
-          |> Seq.sum
+          |> Seq.sum*)
 
+    let result = -1L
     printfn ""
     printfn $"Result = {result:``#,0``} ({result})"
     printfn ""
