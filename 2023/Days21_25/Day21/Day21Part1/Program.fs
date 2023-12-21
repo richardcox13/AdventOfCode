@@ -38,18 +38,20 @@ let main(args) =
     printfn ""
     use diag = Utility.GetTracker ()
     let filename = args[0]
-    printfn $"Input file {filename}"
+    let stepCount = Int32.Parse(args[1])
+    printfn $"Input file {filename}; steps = {stepCount}"
     let input = File.ReadAllLines(filename)
     printfn ""
 
     let start = findChar 'S' input
     printfn $"Starting at {start}"
 
-    let steps = takeSteps input start 6
-    for (idx,s) in (steps |> Seq.mapi (fun idx p -> idx,p)) do
-        printfn $"#{idx+1} Reached {s}"
+    let steps = takeSteps input start stepCount
 
-    let result = -1
+    //for (idx,s) in (steps |> Seq.mapi (fun idx p -> idx,p)) do
+    //    printfn $"#{idx+1} Reached {s}"
+
+    let result = steps |> Seq.length
     printfn ""
     printfn $"Result = {result:``#,0``} ({result})"
     printfn ""
