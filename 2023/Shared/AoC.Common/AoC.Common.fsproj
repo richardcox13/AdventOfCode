@@ -10,6 +10,7 @@
     <Compile Include="Grid.fs" />
     <Compile Include="Dijkstra.fs" />
     <Compile Include="Math.fs" />
+    <Compile Include="Pos.fs" />
     <Compile Include="Utility.fs" />
   </ItemGroup>
 
