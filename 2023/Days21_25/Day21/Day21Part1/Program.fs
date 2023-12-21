@@ -14,6 +14,10 @@ let findChar (target: char) (grid: string[]) =
     { Row = row; Col = col }
 
 let takeSteps (grid: string[]) start stepCount =
+    // Keep track of (position * remaining-steps) already visited.
+    // No mutable Set<T>, so stop bools...
+    let visitedCache = new Dictionary<Position * int, bool>()
+
     let rec inner remaining pos =
         seq {
             if pos.Row >= 0
@@ -24,11 +28,19 @@ let takeSteps (grid: string[]) start stepCount =
                 if remaining = 0 then
                     yield pos
                 else
-                    yield! (inner (remaining-1) (Pos.moveUp pos))
-                    yield! (inner (remaining-1) (Pos.moveDown pos))
-                    yield! (inner (remaining-1) (Pos.moveLeft pos))
-                    yield! (inner (remaining-1) (Pos.moveRight pos))
+                    let (cached, _) = visitedCache.TryGetValue((pos, remaining))
+
+                    if cached then
+                        // Been here before with more steps left... so drop back
+                        yield! Seq.empty<Position>
+                    else
+                        visitedCache[(pos, remaining)] <- true
+                        yield! (inner (remaining-1) (Pos.moveUp pos))
+                        yield! (inner (remaining-1) (Pos.moveDown pos))
+                        yield! (inner (remaining-1) (Pos.moveLeft pos))
+                        yield! (inner (remaining-1) (Pos.moveRight pos))
         }
+
     inner stepCount start |> Seq.distinct
 
 [<EntryPoint>]
