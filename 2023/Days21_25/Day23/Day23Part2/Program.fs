@@ -53,13 +53,14 @@ let findPaths (input: string[]) =
                 None
             else
                 let c = getTile newPos
-                let doIterate = match c, inboundDirection with
-                                     | ('#', _) -> false
-                                     | ('>', d) when d <> Direction.Right -> false
-                                     | ('<', d) when d <> Direction.Left -> false
-                                     | ('^', d) when d <> Direction.Up -> false
-                                     | ('v', d) when d <> Direction.Down -> false
-                                     | _ -> true
+                //let doIterate = match c, inboundDirection with
+                //                     | ('#', _) -> false
+                //                     | ('>', d) when d <> Direction.Right -> false
+                //                     | ('<', d) when d <> Direction.Left -> false
+                //                     | ('^', d) when d <> Direction.Up -> false
+                //                     | ('v', d) when d <> Direction.Down -> false
+                //                     | _ -> true
+                let doIterate = c <> '#'
                 if doIterate then
                     let h = newPos :: history
                     //showPath $"Depth {count}" input h
