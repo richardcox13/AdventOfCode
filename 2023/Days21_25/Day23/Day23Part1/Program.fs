@@ -90,13 +90,24 @@ let main(args) =
     let histToStr hist =
         hist |> List.map (fun x -> x.ToString()) |> String.concat ", "
 
-    let results = findPaths input
-                //|> Seq.take 1
-    for (count, hist) in results do
-        let h = hist |> List.rev
-        printfn $"{count} steps found: {histToStr h}"
-        printfn ""
-        //showPath "***** At end" input h
+    let results
+        = findPaths input
+          //|> Seq.take 1
+          |> Seq.sortByDescending (fun (c, _) -> c)
+          |> Seq.toArray
+
+    let res = results[0]
+    printfn $"Longest path is {fst res} strps"
+    printfn $"Steps: {snd res |> List.rev |> histToStr}"
+    printfn ""
+    printfn "Other solution lengths: %s"
+        (results |> Seq.skip 1 |> Seq.map (fun (c,_) -> c.ToString()) |> String.concat ", ")
+
+    //for (count, hist) in results do
+    //    let h = hist |> List.rev
+    //    printfn $"{count} steps found: {histToStr h}"
+    //    printfn ""
+    //    //showPath "***** At end" input h
 
     let result = -1
     printfn ""
