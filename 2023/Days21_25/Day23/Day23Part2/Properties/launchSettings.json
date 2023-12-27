@@ -1,0 +1,14 @@
+{
+  "profiles": {
+    "Day23Part2_Test": {
+      "commandName": "Project",
+      "commandLineArgs": "..\\Test.txt",
+      "workingDirectory": "E:\\Projects\\GitHub\\AdventOfCode\\2023\\Days21_25\\Day23\\Day23Part2"
+    },
+    "Day23Part2_Full": {
+      "commandName": "Project",
+      "commandLineArgs": "..\\Input.txt",
+      "workingDirectory": "E:\\Projects\\GitHub\\AdventOfCode\\2023\\Days21_25\\Day23\\Day23Part2"
+    }
+  }
+}
