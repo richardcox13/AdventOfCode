@@ -40,19 +40,16 @@ let findPaths (input: string[]) =
 
     let getTile row col = input[row][col]
 
-    let rec iterate history newRow newCol inboundDirection count =
-        seq {
-            (*if newPos.Row < 0
-                    || newPos.Row > maxRow
-                    || newPos.Col < 0
-                    || newPos.Col > maxCol then
-                None
-            else*)
+    seq {
+        // (history, row, col, direction, count)
+        let stack = new Stack<(int * int) list * int * int * Direction * int>()
+        stack.Push([], startPos.Row, startPos.Col, Direction.Down, 0)
+
+        while stack.Count > 0 do
+            let (history, newRow, newCol, inboundDirection, count) = stack.Pop()
             if newRow = endPos.Row && newCol = endPos.Col then
-                Some (count, history)
-            else if List.contains (newRow,newCol) history then
-                None
-            else
+                yield (count, history)
+            else if not (List.contains (newRow,newCol) history) then
                 let c = getTile newRow newCol
                 let doIterate = c <> '#'
                 if doIterate then
@@ -60,20 +57,14 @@ let findPaths (input: string[]) =
                     let cc = count+1
                     //showPath $"Depth {count}" input h
                     if inboundDirection <> Direction.Down && newRow > 0 then
-                        yield! iterate h (newRow-1) newCol Direction.Up cc
+                        stack.Push((h, (newRow-1), newCol, Direction.Up, cc))
                     if inboundDirection <> Direction.Up && newRow < maxRow then
-                        yield! iterate h (newRow+1) newCol Direction.Down cc
+                        stack.Push((h, (newRow+1), newCol, Direction.Down, cc))
                     if inboundDirection <> Direction.Right && newCol < maxCol then
-                        yield! iterate h  newRow (newCol-1) Direction.Left cc
+                        stack.Push((h,  newRow, (newCol-1), Direction.Left, cc))
                     if inboundDirection <> Direction.Left && newCol > 0 then
-                        yield! iterate h newRow (newCol+1) Direction.Right cc
-                else
-                    None
-        }
-
-    iterate [] startPos.Row startPos.Col Direction.Down 0
-        |> Seq.where (fun res -> res.IsSome)
-        |> Seq.map (fun res -> res.Value)
+                        stack.Push((h, newRow, (newCol+1), Direction.Right, cc))
+    }
 
 
 [<EntryPoint>]
