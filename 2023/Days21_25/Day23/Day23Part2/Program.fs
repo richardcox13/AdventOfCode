@@ -38,41 +38,40 @@ let findPaths (input: string[]) =
     let startPos= { Row = 0; Col = 1 }
     let endPos = { Row = maxRow; Col = maxCol - 1 }
 
-    let getTile pos = input[pos.Row][pos.Col]
+    let getTile row col = input[row][col]
 
-    let rec iterate history newPos inboundDirection count =
+    let rec iterate history newRow newCol inboundDirection count =
         seq {
-            if newPos.Row < 0
+            (*if newPos.Row < 0
                     || newPos.Row > maxRow
                     || newPos.Col < 0
                     || newPos.Col > maxCol then
                 None
-            else if newPos = endPos then
+            else*)
+            if newRow = endPos.Row && newCol = endPos.Col then
                 Some (count, history)
-            else if List.contains newPos history then
+            else if List.contains (newRow,newCol) history then
                 None
             else
-                let c = getTile newPos
-                //let doIterate = match c, inboundDirection with
-                //                     | ('#', _) -> false
-                //                     | ('>', d) when d <> Direction.Right -> false
-                //                     | ('<', d) when d <> Direction.Left -> false
-                //                     | ('^', d) when d <> Direction.Up -> false
-                //                     | ('v', d) when d <> Direction.Down -> false
-                //                     | _ -> true
+                let c = getTile newRow newCol
                 let doIterate = c <> '#'
                 if doIterate then
-                    let h = newPos :: history
+                    let h = (newRow,newCol) :: history
+                    let cc = count+1
                     //showPath $"Depth {count}" input h
-                    yield! iterate h (Pos.moveUp newPos) Direction.Up (count+1)
-                    yield! iterate h (Pos.moveDown newPos) Direction.Down (count+1)
-                    yield! iterate h (Pos.moveLeft newPos) Direction.Left (count+1)
-                    yield! iterate h (Pos.moveRight newPos) Direction.Right (count+1)
+                    if inboundDirection <> Direction.Down && newRow > 0 then
+                        yield! iterate h (newRow-1) newCol Direction.Up cc
+                    if inboundDirection <> Direction.Up && newRow < maxRow then
+                        yield! iterate h (newRow+1) newCol Direction.Down cc
+                    if inboundDirection <> Direction.Right && newCol < maxCol then
+                        yield! iterate h  newRow (newCol-1) Direction.Left cc
+                    if inboundDirection <> Direction.Left && newCol > 0 then
+                        yield! iterate h newRow (newCol+1) Direction.Right cc
                 else
                     None
         }
 
-    iterate [] startPos Direction.Down 0
+    iterate [] startPos.Row startPos.Col Direction.Down 0
         |> Seq.where (fun res -> res.IsSome)
         |> Seq.map (fun res -> res.Value)
 
@@ -88,8 +87,8 @@ let main(args) =
     let input = File.ReadAllLines(filename)
     printfn ""
 
-    let histToStr hist =
-        hist |> List.map (fun x -> x.ToString()) |> String.concat ", "
+    let histToStr (hist: (int*int) list) =
+        hist |> List.map (fun (r,c)-> $"({r},{c})") |> String.concat ", "
 
     let results
         = findPaths input
