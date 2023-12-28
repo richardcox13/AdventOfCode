@@ -45,25 +45,28 @@ let findPaths (input: string[]) =
         let stack = new Stack<(int * int) list * int * int * Direction * int>()
         stack.Push([], startPos.Row, startPos.Col, Direction.Down, 0)
 
+        let addToStack hist r c dir count =
+            let t = getTile r c
+            if t <> '#' then
+                stack.Push((hist, r, c, dir, count))
+
+
         while stack.Count > 0 do
             let (history, newRow, newCol, inboundDirection, count) = stack.Pop()
             if newRow = endPos.Row && newCol = endPos.Col then
                 yield (count, history)
             else if not (List.contains (newRow,newCol) history) then
-                let c = getTile newRow newCol
-                let doIterate = c <> '#'
-                if doIterate then
-                    let h = (newRow,newCol) :: history
-                    let cc = count+1
-                    //showPath $"Depth {count}" input h
-                    if inboundDirection <> Direction.Down && newRow > 0 then
-                        stack.Push((h, (newRow-1), newCol, Direction.Up, cc))
-                    if inboundDirection <> Direction.Up && newRow < maxRow then
-                        stack.Push((h, (newRow+1), newCol, Direction.Down, cc))
-                    if inboundDirection <> Direction.Right && newCol < maxCol then
-                        stack.Push((h,  newRow, (newCol-1), Direction.Left, cc))
-                    if inboundDirection <> Direction.Left && newCol > 0 then
-                        stack.Push((h, newRow, (newCol+1), Direction.Right, cc))
+                let h = (newRow,newCol) :: history
+                let cc = count+1
+                //showPath $"Depth {count}" input h
+                if inboundDirection <> Direction.Down && newRow > 0 then
+                    addToStack h (newRow-1)  newCol  Direction.Up  cc
+                if inboundDirection <> Direction.Up && newRow < maxRow then
+                    addToStack h (newRow+1) newCol Direction.Down cc
+                if inboundDirection <> Direction.Right && newCol < maxCol then
+                    addToStack h newRow (newCol-1) Direction.Left cc
+                if inboundDirection <> Direction.Left && newCol > 0 then
+                    addToStack h newRow (newCol+1) Direction.Right cc
     }
 
 
