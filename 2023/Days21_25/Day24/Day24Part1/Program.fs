@@ -5,6 +5,30 @@ open System.Text.RegularExpressions
 open AoC.Common
 open AoC.Common.Core
 
+type Line2D =
+    {
+        Index: int
+        StartX: double
+        StartY: double
+        VelX: double
+        VelY: double
+    }
+
+let parseInput (input: string seq) =
+    let matchNumber = new Regex(@"-?\d+")
+    input
+    |> Seq.mapi (fun idx line ->
+        let ms = matchNumber.Matches(line)
+        assert (ms.Count = 6)
+
+        // For part 1, only considering X & Y so 3rd & 6th matches ignored
+        { Index = idx;
+          StartX = Double.Parse(ms[0].Value);
+          StartY = Double.Parse(ms[1].Value);
+          VelX = Double.Parse(ms[3].Value);
+          VelY = Double.Parse(ms[4].Value); }
+    )
+
 [<EntryPoint>]
 let main(args) =
     printfn $"Working folder: {Environment.CurrentDirectory}"
@@ -15,6 +39,8 @@ let main(args) =
     printfn $"Input file {filename}"
     let input = File.ReadAllLines(filename)
     printfn ""
+
+    let lines = input |> parseInput |> Seq.toArray
 
     let result = -1
     printfn ""
