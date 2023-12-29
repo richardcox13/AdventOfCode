@@ -29,6 +29,14 @@ let parseInput (input: string seq) =
           VelY = Double.Parse(ms[4].Value); }
     )
 
+let allPairs<'T> (collection: 'T array) =
+    let max = collection.Length-1
+    seq {
+        for first in 0 .. (max-1) do
+            for second in (first+1) .. max do
+                yield (collection[first], collection[second])
+    }
+
 [<EntryPoint>]
 let main(args) =
     printfn $"Working folder: {Environment.CurrentDirectory}"
@@ -41,6 +49,9 @@ let main(args) =
     printfn ""
 
     let lines = input |> parseInput |> Seq.toArray
+
+    for (f, s) in (lines |> allPairs) do
+        printfn $"({f.Index}, {s.Index})"
 
     let result = -1
     printfn ""
